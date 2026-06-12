@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Monitoring Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-100 text-slate-800">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Task Monitoring Dashboard</h1>
+        <p class="text-sm text-slate-500">Pantau task, status, kebutuhan alat, dan video sample Lightwheel.</p>
+      </div>
+
+      <button onclick="loadTasks()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium">
+        Refresh Data
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Statistik -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-2xl p-4 shadow-sm border">
+        <p class="text-sm text-slate-500">Total Task</p>
+        <h2 id="totalTask" class="text-3xl font-bold mt-1">0</h2>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border">
+        <p class="text-sm text-slate-500">Online</p>
+        <h2 id="onlineTask" class="text-3xl font-bold mt-1 text-green-600">0</h2>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border">
+        <p class="text-sm text-slate-500">Offline</p>
+        <h2 id="offlineTask" class="text-3xl font-bold mt-1 text-slate-500">0</h2>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border">
+        <p class="text-sm text-slate-500">Dengan Video</p>
+        <h2 id="videoTask" class="text-3xl font-bold mt-1 text-blue-600">0</h2>
+      </div>
+    </section>
+
+    <!-- Filter -->
+    <section class="bg-white rounded-2xl p-4 shadow-sm border mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="Cari Task ID / Task Name..."
+          class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+          oninput="renderTasks()"
+        />
+
+        <select
+          id="statusFilter"
+          class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+          onchange="renderTasks()"
+        >
+          <option value="">Semua Status</option>
+          <option value="Online">Online</option>
+          <option value="Offline">Offline</option>
+          <option value="Unknown">Unknown</option>
+        </select>
+
+        <select
+          id="videoFilter"
+          class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+          onchange="renderTasks()"
+        >
+          <option value="">Semua Video</option>
+          <option value="with">Dengan Video</option>
+          <option value="without">Tanpa Video</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Loading -->
+    <div id="loading" class="text-center py-10 text-slate-500">
+      Memuat data task...
+    </div>
+
+    <!-- Card Container -->
+    <section id="taskGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></section>
+
+  </main>
+
+  <!-- Modal Detail Task -->
+  <div id="taskModal" class="fixed inset-0 bg-black/60 hidden z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+
+      <div class="flex items-center justify-between p-5 border-b">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Detail Task</h2>
+          <p class="text-sm text-slate-500">Video sample dan informasi lengkap task</p>
+        </div>
+
+        <button onclick="closeModal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xl">
+          ×
+        </button>
+      </div>
+
+      <div class="p-5">
+
+        <!-- Video -->
+        <div class="bg-black rounded-2xl overflow-hidden mb-5">
+          <video
+            id="modalVideo"
+            class="w-full max-h-[420px]"
+            controls
+            autoplay
+          ></video>
+        </div>
+
+        <!-- Detail -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+          <div class="bg-slate-50 rounded-2xl p-4">
+            <p class="text-xs text-slate-500 mb-1">Task ID</p>
+            <h3 id="modalTaskId" class="font-bold text-slate-900"></h3>
+          </div>
+
+          <div class="bg-slate-50 rounded-2xl p-4">
+            <p class="text-xs text-slate-500 mb-1">Status</p>
+            <span id="modalStatus" class="inline-flex px-3 py-1 rounded-full text-sm font-medium"></span>
+          </div>
+        </div>
+
+        <div class="mb-5">
+          <p class="text-xs text-slate-500 mb-1">Task Name</p>
+          <h3 id="modalTaskName" class="text-2xl font-bold text-slate-900"></h3>
+        </div>
+
+        <div class="mb-5">
+          <p class="text-xs text-slate-500 mb-1">Deskripsi</p>
+          <p id="modalDescription" class="text-slate-700 leading-relaxed"></p>
+        </div>
+
+        <div class="mb-5">
+          <p class="text-xs text-slate-500 mb-2">Alat / Barang yang Dibutuhkan</p>
+          <ul id="modalItems" class="space-y-2"></ul>
+        </div>
+
+        <div class="mb-2">
+          <p class="text-xs text-slate-500 mb-1">Task Goal</p>
+          <p id="modalGoal" class="text-slate-700 leading-relaxed"></p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnR7Cq9sVzlc9oC0kkX0kJM78dwQD00KjYPFl0_pl3UODV2VacE9w6TCkanKtOtbkZt0uhd7y5LXIKT16eLi11V6Tj8h5e9KGuH3J41LFoDOEq8ZpoAAY817ieTO3-P7_3uiuzZnMg087Q32Z72tIUI9jpcUGF60Aeo5Ls0i8moFUmtH8S5XCfn9D_HxIdbGm9wIZ5rRwrGDH41-Q3Jj5hY87HjUdYkxFOkjhrCpIt1gjxkTpQK2wRBdR6-D0ZKufZ81JruZZtvf4ATXyInnNT8PAsuC9w&lib=MYCKRTqVWRxbOGuMR3Kuf9GjuLd7lMFYi";
+
+    let allTasks = [];
+
+    async function loadTasks() {
+      const loading = document.getElementById("loading");
+      const grid = document.getElementById("taskGrid");
+
+      loading.classList.remove("hidden");
+      grid.innerHTML = "";
+
+      try {
+        const response = await fetch(API_URL);
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.message || "Gagal mengambil data");
+        }
+
+        allTasks = result.data || [];
+        updateStats();
+        renderTasks();
+
+      } catch (error) {
+        console.error(error);
+        grid.innerHTML = `
+          <div class="col-span-full bg-red-50 border border-red-200 text-red-700 rounded-2xl p-5">
+            Gagal memuat data. Cek kembali URL Apps Script dan akses deployment.
+          </div>
+        `;
+      } finally {
+        loading.classList.add("hidden");
+      }
+    }
+
+    function updateStats() {
+      const total = allTasks.length;
+      const online = allTasks.filter(t => getStatus(t) === "Online").length;
+      const offline = allTasks.filter(t => getStatus(t) === "Offline").length;
+      const withVideo = allTasks.filter(t => cleanVideoUrl(t.video_url)).length;
+
+      document.getElementById("totalTask").textContent = total;
+      document.getElementById("onlineTask").textContent = online;
+      document.getElementById("offlineTask").textContent = offline;
+      document.getElementById("videoTask").textContent = withVideo;
+    }
+
+    function renderTasks() {
+      const grid = document.getElementById("taskGrid");
+      const search = document.getElementById("searchInput").value.toLowerCase();
+      const statusFilter = document.getElementById("statusFilter").value;
+      const videoFilter = document.getElementById("videoFilter").value;
+
+      let filtered = allTasks.filter(task => {
+        const taskId = String(task.task_id || "").toLowerCase();
+        const taskName = String(task.task_name || "").toLowerCase();
+        const description = String(task.description || "").toLowerCase();
+        const status = getStatus(task);
+        const hasVideo = Boolean(cleanVideoUrl(task.video_url));
+
+        const matchSearch =
+          taskId.includes(search) ||
+          taskName.includes(search) ||
+          description.includes(search);
+
+        const matchStatus = !statusFilter || status === statusFilter;
+
+        const matchVideo =
+          !videoFilter ||
+          (videoFilter === "with" && hasVideo) ||
+          (videoFilter === "without" && !hasVideo);
+
+        return matchSearch && matchStatus && matchVideo;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full bg-white border rounded-2xl p-8 text-center text-slate-500">
+            Tidak ada task yang cocok.
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map((task, index) => {
+        const status = getStatus(task);
+        const statusClass = getStatusClass(status);
+        const videoUrl = cleanVideoUrl(task.video_url);
+        const desc = task.description || "-";
+
+        return `
+          <article class="bg-white rounded-3xl p-5 shadow-sm border hover:shadow-lg transition">
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <p class="text-xs text-slate-500">Task ID</p>
+                <h3 class="text-lg font-bold text-blue-600">${escapeHtml(task.task_id || "-")}</h3>
+              </div>
+
+              <span class="${statusClass}">
+                ${status}
+              </span>
+            </div>
+
+            <h2 class="text-lg font-bold text-slate-900 mb-2 line-clamp-2">
+              ${escapeHtml(task.task_name || "-")}
+            </h2>
+
+            <p class="text-sm text-slate-600 leading-relaxed mb-5 line-clamp-3">
+              ${escapeHtml(desc)}
+            </p>
+
+            <button
+              onclick="openModal(${index})"
+              class="w-full py-3 rounded-xl font-medium ${
+                videoUrl
+                  ? "bg-blue-600 hover:bg-blue-700 text-white"
+                  : "bg-slate-200 text-slate-500 cursor-not-allowed"
+              }"
+              ${videoUrl ? "" : "disabled"}
+            >
+              ${videoUrl ? "Play Video" : "Video Tidak Ada"}
+            </button>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function openModal(index) {
+      const search = document.getElementById("searchInput").value.toLowerCase();
+      const statusFilter = document.getElementById("statusFilter").value;
+      const videoFilter = document.getElementById("videoFilter").value;
+
+      const filtered = allTasks.filter(task => {
+        const taskId = String(task.task_id || "").toLowerCase();
+        const taskName = String(task.task_name || "").toLowerCase();
+        const description = String(task.description || "").toLowerCase();
+        const status = getStatus(task);
+        const hasVideo = Boolean(cleanVideoUrl(task.video_url));
+
+        const matchSearch = taskId.includes(search) || taskName.includes(search) || description.includes(search);
+        const matchStatus = !statusFilter || status === statusFilter;
+        const matchVideo = !videoFilter || (videoFilter === "with" && hasVideo) || (videoFilter === "without" && !hasVideo);
+
+        return matchSearch && matchStatus && matchVideo;
+      });
+
+      const task = filtered[index];
+      if (!task) return;
+
+      const status = getStatus(task);
+      const videoUrl = cleanVideoUrl(task.video_url);
+
+      document.getElementById("modalTaskId").textContent = task.task_id || "-";
+      document.getElementById("modalTaskName").textContent = task.task_name || "-";
+      document.getElementById("modalDescription").textContent = task.description || "-";
+      document.getElementById("modalGoal").textContent = task.task_goal || "-";
+
+      const modalStatus = document.getElementById("modalStatus");
+      modalStatus.textContent = status;
+      modalStatus.className = getStatusClass(status);
+
+      const itemsContainer = document.getElementById("modalItems");
+      const items = String(task.required_items || "")
+        .split(",")
+        .map(item => item.trim())
+        .filter(Boolean);
+
+      if (items.length === 0) {
+        itemsContainer.innerHTML = `<li class="text-slate-500">Belum ada data alat/barang.</li>`;
+      } else {
+        itemsContainer.innerHTML = items.map(item => `
+          <li class="flex items-start gap-2 bg-slate-50 rounded-xl px-4 py-3">
+            <span class="text-blue-600 mt-0.5">•</span>
+            <span>${escapeHtml(item)}</span>
+          </li>
+        `).join("");
+      }
+
+      const video = document.getElementById("modalVideo");
+      video.src = videoUrl;
+      video.load();
+      video.play().catch(() => {});
+
+      const modal = document.getElementById("taskModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeModal() {
+      const modal = document.getElementById("taskModal");
+      const video = document.getElementById("modalVideo");
+
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function getStatus(task) {
+      const status = String(task.dashboard_status || "").trim();
+
+      if (status) return status;
+
+      const pullable = Number(task.pullable_num || 0);
+      if (pullable > 0) return "Online";
+
+      return "Offline";
+    }
+
+    function getStatusClass(status) {
+      if (status === "Online") {
+        return "inline-flex px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700";
+      }
+
+      if (status === "Offline") {
+        return "inline-flex px-3 py-1 rounded-full text-sm font-medium bg-slate-100 text-slate-600";
+      }
+
+      return "inline-flex px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-700";
+    }
+
+    function cleanVideoUrl(url) {
+      if (!url) return "";
+      return String(url)
+        .trim()
+        .replaceAll("&amp;", "&");
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    loadTasks();
+
+    // Auto refresh setiap 60 detik
+    setInterval(loadTasks, 60000);
+  </script>
+
+</body>
+</html>
