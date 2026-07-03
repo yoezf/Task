@@ -216,7 +216,11 @@
           </div>
 
           <div><label class="text-[9px] font-bold text-slate-500 uppercase">Catatan Internal</label><textarea id="form_catatan" rows="2" class="w-full text-xs border rounded-lg p-2 focus:outline-sky-300"></textarea></div>
-          <div><label class="text-[9px] font-bold text-slate-500 uppercase">Project Name</label><input id="form_project" class="w-full text-xs border rounded-lg px-2 py-2 focus:outline-sky-300" /></div>
+          <div>
+            <label class="text-[9px] font-bold text-slate-500 uppercase">Project Name</label>
+            <select id="form_project" onchange="toggleNewProjectInput()" class="w-full text-xs bg-white border rounded-lg px-2 py-2 focus:outline-sky-300"></select>
+            <input id="form_projectNew" type="text" placeholder="Nama project baru..." class="hidden w-full text-xs border rounded-lg px-2 py-2 mt-2 focus:outline-sky-300" />
+          </div>
           <div class="relative bg-purple-50 p-3 rounded-xl border border-purple-100">
              <label class="text-[9px] font-bold text-purple-800 uppercase flex justify-between">Client Note <span id="form_lockInfo" class="text-purple-500"><i class="fa-solid fa-lock"></i> Only Approver</span></label>
              <textarea id="form_clientNote" rows="2" class="w-full text-xs border rounded-lg p-2 mt-1 focus:outline-purple-300"></textarea>
@@ -256,9 +260,9 @@
 <script>
 // ================= STATE & CONFIG =================
 let STATE = {
-  apiUrl: 'https://script.google.com/macros/s/AKfycbyIu3k8TGRfiURfCbZxKSVKdoWZ7GuU2lGDMA0vQc1ZklWYH322JW0HJNfG2y9srUQ/exec', // <-- GANTI DENGAN URL WEB APP BARU ANDA
-  allTasks: [], filteredTasks: [],
-  role: 'public', userName: 'Guest',
+  apiUrl: 'https://script.google.com/macros/s/AKfycbxW8lHN-0wf4TnLRpmRk04Ms0tSLmxNeCjikOzTd9x1mdodmMKJfWeQy-aiE5ukQUT4/exec', // <-- GANTI DENGAN URL WEB APP BARU ANDA
+  allTasks: [], filteredTasks: [], projects: [],
+  role: 'public', userName: 'Guest', username: '',
   search: '', project: '', status: '', workflow: '', sort: 'update_desc',
   page: 1, perPage: 30 // GRID 5x6 = 30 Items
 };
@@ -373,6 +377,7 @@ async function loadData() {
     const j = await res.json();
     if(!j.success) throw 1;
     STATE.allTasks = j.data;
+    STATE.projects = j.projects || STATE.projects || [];
     persistLocal();
     setupProjFilter(); applyFilter();
   } catch(e) {
@@ -387,8 +392,31 @@ async function loadData() {
 }
 function setupProjFilter() {
   const sel = document.getElementById('filterProject');
-  const projs = [...new Set(STATE.allTasks.map(t=>t['Project Name']).filter(Boolean))];
+  const fromTasks = STATE.allTasks.map(t=>t['Project Name']).filter(Boolean);
+  const projs = [...new Set([...(STATE.projects||[]), ...fromTasks])];
   sel.innerHTML = '<option value="all">Semua Project</option>' + projs.map(p=>`<option value="${p}">${p}</option>`).join('');
+}
+
+// (2) Project = tab/sheet tersendiri. Isi dropdown project di form edit/buat task,
+// termasuk opsi untuk membuat project (tab) baru.
+function populateProjectSelect(selected) {
+  const sel = document.getElementById('form_project');
+  const fromTasks = STATE.allTasks.map(t=>t['Project Name']).filter(Boolean);
+  const projs = [...new Set([...(STATE.projects||[]), ...fromTasks])];
+  let html = projs.map(p=>`<option value="${p}">${p}</option>`).join('');
+  html += `<option value="__new__">+ Buat Project Baru</option>`;
+  sel.innerHTML = html;
+  if(selected && projs.includes(selected)) {
+    sel.value = selected;
+  } else if(selected) {
+    sel.insertAdjacentHTML('afterbegin', `<option value="${selected}">${selected}</option>`);
+    sel.value = selected;
+  }
+  toggleNewProjectInput();
+}
+function toggleNewProjectInput() {
+  const sel = document.getElementById('form_project'), inp = document.getElementById('form_projectNew');
+  if(sel.value === '__new__') { inp.classList.remove('hidden'); inp.focus(); } else { inp.classList.add('hidden'); inp.value=''; }
 }
 function applyFilter() {
   let ts = [...STATE.allTasks];
@@ -586,10 +614,13 @@ function openForm(id) {
 
   document.getElementById('editModalTitle').innerHTML = t ? '<i class="fa-solid fa-pen"></i> Edit Task' : '<i class="fa-solid fa-plus"></i> Buat Task';
   document.getElementById('editTaskId').value = id||''; document.getElementById('form_taskId').value = id||''; document.getElementById('form_taskId').disabled = !!id;
-  const k = ['project','taskName','desc','goal','initStatus','genDir','type','num','label','pull','env','status','wf','video','qr','barang','catatan','clientNote'];
-  const dk = ['Project Name','Task Name','Description','Task Goal','Initialize Status','Generalization Direction','Task Type','Num','Label','Pullable Num','Environment Type','Status','Workflow','Video URL','QR Code URL','List Barang','Catatan','Client Note'];
+  const k = ['taskName','desc','goal','initStatus','genDir','type','num','label','pull','env','status','wf','video','qr','barang','catatan','clientNote'];
+  const dk = ['Task Name','Description','Task Goal','Initialize Status','Generalization Direction','Task Type','Num','Label','Pullable Num','Environment Type','Status','Workflow','Video URL','QR Code URL','List Barang','Catatan','Client Note'];
   k.forEach((idK,i) => { document.getElementById('form_'+idK).value = t ? (t[dk[i]]||'') : ''; });
-  if(!t) { document.getElementById('form_status').value = 'Offline'; document.getElementById('form_wf').value = 'Waiting Received'; document.getElementById('form_project').value = STATE.project||''; }
+  if(!t) { document.getElementById('form_status').value = 'Offline'; document.getElementById('form_wf').value = 'Waiting Received'; }
+
+  // (2) Project = pilihan tab/sheet yang sudah ada, atau buat baru
+  populateProjectSelect(t ? t['Project Name'] : (STATE.project||''));
 
   // (2) Field berikut TIDAK BISA diedit setelah task dibuat (hanya bisa diisi saat pertama kali buat task)
   const lockedFields = ['taskName','desc','goal','initStatus','genDir','type','num','label','pull','env'];
@@ -608,7 +639,15 @@ function openForm(id) {
 // (6) Optimistic save: data lokal diupdate dulu supaya UI instan, baru sinkron ke server
 async function saveTask() {
   const oldId = document.getElementById('editTaskId').value, nId = document.getElementById('form_taskId').value.trim(); if(!nId) return alert('Task ID wajib!');
-  const d = {'Task ID':nId, 'Project Name':v('project'), 'Task Name':v('taskName'), 'Description':v('desc'), 'Task Goal':v('goal'), 'Initialize Status':v('initStatus'), 'Generalization Direction':v('genDir'), 'Task Type':v('type'), 'Num':v('num'), 'Label':v('label'), 'Pullable Num':v('pull'), 'Environment Type':v('env'), 'Status':v('status'), 'Workflow':v('wf'), 'Video URL':v('video'), 'QR Code URL':v('qr'), 'List Barang':v('barang'), 'Catatan':v('catatan'), 'Client Note':v('clientNote')};
+
+  // (2) Project Name diambil dari dropdown; kalau pilih "Buat Project Baru", ambil dari input teks baru
+  let projectVal = v('project');
+  if(projectVal === '__new__') {
+    projectVal = document.getElementById('form_projectNew').value.trim();
+    if(!projectVal) return alert('Nama project baru wajib diisi!');
+  }
+
+  const d = {'Task ID':nId, 'Project Name':projectVal, 'Task Name':v('taskName'), 'Description':v('desc'), 'Task Goal':v('goal'), 'Initialize Status':v('initStatus'), 'Generalization Direction':v('genDir'), 'Task Type':v('type'), 'Num':v('num'), 'Label':v('label'), 'Pullable Num':v('pull'), 'Environment Type':v('env'), 'Status':v('status'), 'Workflow':v('wf'), 'Video URL':v('video'), 'QR Code URL':v('qr'), 'List Barang':v('barang'), 'Catatan':v('catatan'), 'Client Note':v('clientNote')};
   
   // SIMPAN NAMA PENGUPDATE
   d['Updated By'] = `by: ${actorLabel()}`;
@@ -616,6 +655,10 @@ async function saveTask() {
 
   if(!oldId) STATE.allTasks.unshift(d);
   else { const i=STATE.allTasks.findIndex(x=>String(x['Task ID'])===String(oldId)); if(i>-1) STATE.allTasks[i]=d; }
+
+  // Kalau project baru dibuat, tambahkan ke daftar project lokal supaya langsung muncul di dropdown
+  if(!STATE.projects.includes(projectVal)) { STATE.projects.push(projectVal); setupProjFilter(); }
+
   persistLocal(); closeModal('editModal'); applyFilter();
   showToast('<i class="fa-solid fa-spinner fa-spin"></i>', 'Menyimpan...', 'bg-sky-500');
   try {
