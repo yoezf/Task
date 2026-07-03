@@ -8,7 +8,7 @@
 
 const CONFIG = {
   // GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA SETELAH DEPLOY
-  API_URL: 'https://script.google.com/macros/s/AKfycbzZ8_5VaPZm9sr_l5FxxxwRQym2SW_QcdwS6jcI1kWcXMZn91K071sjENaESWEMGSq7/exec',
+  API_URL: 'https://docs.google.com/spreadsheets/d/1yGp-IDhYgP1O3s-V9AUNImjvFP6mT2vAc0Bf-TBmtFM/edit?gid=1523672340#gid=1523672340',
   POLLING_INTERVAL: 5000, // Realtime polling setiap 5 detik (5000 ms)
   DEFAULT_PER_PAGE: 30,    // Item per halaman untuk grid pagination
 };
