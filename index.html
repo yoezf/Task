@@ -2,203 +2,504 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Task Management Produksi</title>
-  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/906/906324.png" type="image/png">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Task Management Produksi V2</title>
+  <meta name="description" content="Sistem Task Management Produksi - Realtime, Multi Role, Mobile Friendly" />
+  <meta name="theme-color" content="#0f172a" />
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    * { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-    .nav-blur { background:rgba(15,23,42,.95); backdrop-filter:blur(16px); }
-    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,.08); }
-    .modal-overlay { animation: fadeIn .15s ease; }
-    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-    .modal-box { animation: slideUp .2s ease; }
-    @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-    ::-webkit-scrollbar { display: none; } /* Hide scrollbar for cleaner mobile look */
-    .skeleton { animation: pulse 1.5s infinite; background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 200% 100%; }
-    @keyframes pulse { 0%,100%{background-position:200% 0} 50%{background-position:-200% 0} }
-    .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { 'slate-850': '#0f172a' }
+        }
+      }
+    };
+  </script>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" />
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="assets/css/dashboard.css" />
 </head>
-<body class="bg-slate-50 min-h-screen pb-24">
 
-<nav class="nav-blur fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6 shadow-md text-white">
-  <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
-    <i class="fa-solid fa-layer-group text-sky-400 text-xl"></i>
-    <span class="font-bold tracking-tight text-sm sm:text-base">Dashboard <span class="hidden sm:inline">Produksi</span></span>
-  </div>
-  
-  <div class="flex items-center gap-5">
-    <button onclick="toggleSearch()" class="text-slate-300 hover:text-white text-lg transition"><i class="fa-solid fa-magnifying-glass"></i></button>
-    
+<body class="bg-slate-100 min-h-screen text-slate-800">
+
+  <!-- ============================================================ -->
+  <!-- NAVBAR -->
+  <!-- ============================================================ -->
+  <nav class="nav-blur fixed top-0 left-0 right-0 z-50 h-14 flex items-center justify-between px-4 sm:px-6 shadow-md text-white">
+    <div class="flex items-center gap-2.5 cursor-pointer" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+      <div class="w-8 h-8 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center shadow-md shrink-0">
+        <i class="fa-solid fa-layer-group text-white text-sm"></i>
+      </div>
+      <div>
+        <div class="font-black tracking-tight text-sm leading-none">Task Management</div>
+        <div class="text-[9px] text-sky-400 font-semibold tracking-widest uppercase leading-none mt-0.5">Produksi V2</div>
+      </div>
+    </div>
+
     <div class="flex items-center gap-3">
-      <div id="userInfo" class="hidden text-xs font-semibold text-sky-300 bg-white/10 px-2 py-1 rounded-md"></div>
-      <button id="loginBtn" onclick="openModal('loginModal')" class="text-slate-300 hover:text-white text-xl transition"><i class="fa-solid fa-lock"></i></button>
-      <button id="logoutBtn" onclick="logout()" class="hidden text-red-400 hover:text-red-300 text-xl transition"><i class="fa-solid fa-right-from-bracket"></i></button>
+      <button onclick="toggleSearch()" class="text-slate-300 hover:text-white text-base transition-colors p-1" title="Cari">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+      <button id="csvImportBtn" onclick="triggerCsvImport()" class="hidden text-slate-300 hover:text-white text-base transition-colors p-1" title="Import CSV">
+        <i class="fa-solid fa-file-import"></i>
+      </button>
+      <input type="file" id="csvFileInput" accept=".csv" class="hidden" />
+      <span id="userInfo" class="hidden text-[10px] font-bold text-sky-300 bg-white/10 px-2.5 py-1 rounded-lg leading-none items-center gap-1.5 flex"></span>
+      <button id="loginBtn" onclick="openModal('loginModal')" class="text-slate-300 hover:text-white transition-colors p-1" title="Login">
+        <i class="fa-solid fa-user-lock"></i>
+      </button>
+      <button id="logoutBtn" onclick="logout()" class="hidden text-red-400 hover:text-red-300 transition-colors p-1" title="Logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+      <button id="addTaskBtn" onclick="openAddModal()" class="hidden w-8 h-8 bg-gradient-to-r from-sky-500 to-blue-600 rounded-full items-center justify-center shadow-lg hover:opacity-90 transition-all" title="Buat Task">
+        <i class="fa-solid fa-plus text-white text-sm"></i>
+      </button>
     </div>
-    
-    <button id="addTaskBtn" onclick="openAddModal()" class="hidden w-8 h-8 bg-gradient-to-r from-sky-500 to-blue-600 rounded-full items-center justify-center shadow-lg"><i class="fa-solid fa-plus text-sm"></i></button>
-  </div>
-</nav>
+  </nav>
 
-<div id="searchPopover" class="hidden fixed top-16 left-0 right-0 z-40 bg-slate-800 p-3 border-b border-slate-700 shadow-xl transition-all">
-  <div class="relative max-w-screen-2xl mx-auto flex items-center">
-    <i class="fa-solid fa-magnifying-glass absolute left-3 text-slate-400"></i>
-    <input id="searchInput" type="text" placeholder="Cari Task ID, Nama, Project..." class="w-full bg-slate-900 text-white border border-slate-600 rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:border-sky-500 transition" />
-    <i id="searchClear" class="fa-solid fa-xmark hidden absolute right-3 text-slate-400 p-1 cursor-pointer" onclick="clearSearch()"></i>
-  </div>
-</div>
-
-<main class="max-w-[1600px] mx-auto px-4 sm:px-6 pt-20">
-
-  <details class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden group mb-4">
-    <summary class="p-3.5 text-xs font-bold text-slate-600 cursor-pointer flex justify-between items-center bg-slate-50 hover:bg-slate-100 transition">
-      <div class="flex items-center gap-2"><i class="fa-solid fa-filter text-sky-500"></i> Filter & Pengurutan</div>
-      <i class="fa-solid fa-chevron-down text-slate-400 group-open:rotate-180 transition-transform duration-300"></i>
-    </summary>
-    <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-3 border-t border-slate-100">
-      <div>
-        <label class="text-[10px] font-bold text-slate-400 uppercase">Project</label>
-        <select id="filterProject" class="w-full text-xs border rounded-lg px-2 py-2 mt-1 focus:ring-1 focus:ring-sky-400 outline-none"><option value="all">Semua Project</option></select>
-      </div>
-      <div>
-        <label class="text-[10px] font-bold text-slate-400 uppercase">Status</label>
-        <select id="filterStatus" class="w-full text-xs border rounded-lg px-2 py-2 mt-1 focus:ring-1 focus:ring-sky-400 outline-none"><option value="all">Semua Status</option><option value="Online">Online</option><option value="Offline">Offline</option><option value="Hold">Hold</option></select>
-      </div>
-      <div>
-        <label class="text-[10px] font-bold text-slate-400 uppercase">Workflow</label>
-        <select id="filterWorkflow" class="w-full text-xs border rounded-lg px-2 py-2 mt-1 focus:ring-1 focus:ring-sky-400 outline-none">
-          <option value="all">Semua Workflow</option>
-          <option value="Waiting Received">Menunggu Diterima</option>
-          <option value="Received">Diterima</option>
-          <option value="Skip">Skip</option>
-          <option value="Sample Video">Sample Diminta</option>
-          <option value="Sample Done">Sample Selesai</option>
-          <option value="Approved">Disetujui</option>
-          <option value="Revision">Revisi</option>
-          <option value="Ready">Ready</option>
-        </select>
-      </div>
-      <div>
-        <label class="text-[10px] font-bold text-slate-400 uppercase">Urutkan</label>
-        <select id="sortSelect" class="w-full text-xs border rounded-lg px-2 py-2 mt-1 focus:ring-1 focus:ring-sky-400 outline-none"><option value="update_desc">Terbaru diupdate</option><option value="id_desc">Task ID (Terbesar)</option><option value="id_asc">Task ID (Terkecil)</option></select>
-      </div>
-      <div class="col-span-2 md:col-span-4 flex justify-end">
-        <button onclick="resetFilter()" class="text-[10px] font-bold text-slate-500 hover:text-red-500 flex items-center gap-1.5 mt-1 px-2 py-1 rounded-lg hover:bg-red-50 transition"><i class="fa-solid fa-rotate-right"></i> Reset Filter</button>
-      </div>
+  <!-- Search Popover -->
+  <div id="searchPopover" class="hidden fixed top-14 left-0 right-0 z-40 bg-slate-800/98 backdrop-blur-md p-3 border-b border-slate-700 shadow-xl">
+    <div class="relative max-w-2xl mx-auto flex items-center">
+      <i class="fa-solid fa-magnifying-glass absolute left-3.5 text-slate-400 text-sm"></i>
+      <input id="searchInput" type="text" placeholder="Cari Task ID, Nama Task, Project..."
+        class="w-full bg-slate-900 text-white border border-slate-600 rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:border-sky-500 transition-colors" />
+      <button id="searchClear" class="hidden absolute right-3 text-slate-400 hover:text-white p-1 transition-colors" onclick="clearSearch()">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
     </div>
-  </details>
-
-  <div id="loadingGrid" class="hidden grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"></div>
-  <div id="emptyState" class="hidden flex-col items-center justify-center py-20 text-center">
-    <div class="text-slate-300 text-6xl mb-3"><i class="fa-solid fa-inbox"></i></div>
-    <div class="text-slate-600 font-bold text-base">Data tidak ditemukan</div>
   </div>
 
-  <div id="taskGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"></div>
-  
-  <div class="flex items-center justify-center mt-6 gap-3 mb-10">
-    <button id="prevPage" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 disabled:opacity-40 shadow-sm"><i class="fa-solid fa-chevron-left"></i></button>
-    <div id="pageInfo" class="text-xs font-bold text-slate-500">1 / 1</div>
-    <button id="nextPage" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 disabled:opacity-40 shadow-sm"><i class="fa-solid fa-chevron-right"></i></button>
-  </div>
-</main>
+  <!-- ============================================================ -->
+  <!-- MAIN LAYOUT -->
+  <!-- ============================================================ -->
+  <div class="flex min-h-screen pt-14 pb-20">
 
-<div class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] pb-safe">
-  <div class="max-w-lg mx-auto flex justify-between p-3 px-4 sm:px-6">
-    <div class="text-center"><div class="text-lg font-black text-slate-800 leading-none" id="statTotal">0</div><div class="text-[9px] font-bold text-slate-400 uppercase mt-1">Total</div></div>
-    <div class="text-center"><div class="text-lg font-black text-emerald-500 leading-none" id="statOnline">0</div><div class="text-[9px] font-bold text-emerald-400 uppercase mt-1">Online</div></div>
-    <div class="text-center"><div class="text-lg font-black text-amber-500 leading-none" id="statHold">0</div><div class="text-[9px] font-bold text-amber-400 uppercase mt-1">Hold</div></div>
-    <div class="text-center"><div class="text-lg font-black text-red-500 leading-none" id="statSample">0</div><div class="text-[9px] font-bold text-red-400 uppercase mt-1">Perlu Sample</div></div>
-    <div class="text-center"><div class="text-lg font-black text-sky-600 leading-none" id="statReady">0</div><div class="text-[9px] font-bold text-sky-400 uppercase mt-1">Ready</div></div>
-  </div>
-</div>
-
-<div id="detailModal" class="modal-overlay fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
-  <div class="modal-box bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-    <div class="p-4 sm:p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-start">
+    <!-- SIDEBAR (Desktop) -->
+    <aside class="hidden lg:flex w-60 bg-slate-900 text-slate-300 border-r border-slate-800 p-4 flex-col gap-4 shrink-0 sticky top-14 self-start max-h-[calc(100vh-3.5rem)] overflow-y-auto">
       <div>
-        <h2 id="modalTaskId" class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight leading-none"></h2>
-        <div id="modalProjectName" class="text-[10px] sm:text-xs font-bold text-sky-600 uppercase tracking-widest mt-1.5"><i class="fa-solid fa-folder"></i> <span></span></div>
+        <h3 class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
+          <i class="fa-solid fa-sliders text-sky-400"></i> Filter & Urutan
+        </h3>
       </div>
-      <button onclick="closeModal('detailModal')" class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-    </div>
 
-    <div class="overflow-y-auto p-4 sm:p-6 flex-1 space-y-5">
-      <div id="modalNotif" class="hidden text-[10px] bg-red-50 text-red-600 border border-red-200 p-2 rounded-lg items-center gap-2 font-bold"></div>
-      <div id="modalUpdatedBy" class="text-[10px] bg-slate-100 text-slate-500 p-2 rounded-lg flex items-center gap-2 font-medium"></div>
-
-      <div class="flex gap-2" id="modalBadges"></div>
-      
-      <div id="modalVideoThumb" class="w-full aspect-video bg-black rounded-2xl overflow-hidden flex items-center justify-center relative"></div>
-      
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="bg-purple-50 p-4 rounded-2xl border border-purple-100">
-          <div class="text-[10px] font-bold text-purple-800 uppercase mb-1"><i class="fa-solid fa-user-tie"></i> Client Note</div>
-          <p id="modalClientNote" class="text-xs text-slate-700 font-medium"></p>
-        </div>
-        <div class="bg-sky-50 p-4 rounded-2xl border border-sky-100">
-          <div class="text-[10px] font-bold text-sky-800 uppercase mb-1"><i class="fa-solid fa-clipboard"></i> Catatan Internal</div>
-          <p id="modalCatatan" class="text-xs text-slate-700 font-medium"></p>
+      <!-- Project -->
+      <div class="flex flex-col gap-1">
+        <label class="text-[9px] font-bold uppercase text-slate-500">Project</label>
+        <div class="relative">
+          <select id="filterProject" class="w-full bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-500 appearance-none cursor-pointer">
+            <option value="all">Semua Project</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[9px] pointer-events-none"></i>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="md:col-span-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-          <h3 class="font-bold text-xs text-slate-700 mb-3"><i class="fa-solid fa-server"></i> Spesifikasi</h3>
-          <div id="metaGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-        </div>
-        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col items-center justify-center cursor-pointer" onclick="openQRFullscreen()">
-          <h3 class="font-bold text-[10px] text-slate-500 uppercase w-full text-left mb-2"><i class="fa-solid fa-qrcode"></i> QR</h3>
-          <img id="modalQRImg" class="w-full aspect-square object-contain mix-blend-multiply hidden" referrerpolicy="no-referrer" />
-          <div id="modalQREmpty" class="text-slate-400 text-xs text-center my-4"><i class="fa-solid fa-image text-xl mb-1"></i><br>Kosong</div>
+      <!-- Status -->
+      <div class="flex flex-col gap-1">
+        <label class="text-[9px] font-bold uppercase text-slate-500">Status</label>
+        <div class="relative">
+          <select id="filterStatus" class="w-full bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-500 appearance-none cursor-pointer">
+            <option value="all">Semua Status</option>
+            <option value="Online">Online</option>
+            <option value="Offline">Offline</option>
+            <option value="Hold">Hold</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[9px] pointer-events-none"></i>
         </div>
       </div>
-    </div>
-    
-    <div class="p-3 bg-white border-t border-slate-100 flex flex-wrap justify-end gap-2" id="modalActions"></div>
-  </div>
-</div>
 
-<div id="editModal" class="modal-overlay fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
-  <div class="modal-box bg-white rounded-3xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden">
-    <div class="p-4 sm:p-5 border-b bg-slate-50 flex justify-between items-center">
-      <h2 id="editModalTitle" class="text-lg font-bold text-slate-800"></h2>
-      <button onclick="closeModal('editModal')" class="w-8 h-8 rounded-full bg-slate-200 text-slate-500"><i class="fa-solid fa-xmark"></i></button>
+      <!-- Workflow -->
+      <div class="flex flex-col gap-1">
+        <label class="text-[9px] font-bold uppercase text-slate-500">Workflow</label>
+        <div class="relative">
+          <select id="filterWorkflow" class="w-full bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-500 appearance-none cursor-pointer">
+            <option value="all">Semua Workflow</option>
+            <option value="Waiting Received">Menunggu Diterima</option>
+            <option value="Received">Diterima</option>
+            <option value="Skip">Skip</option>
+            <option value="Sample Video">Sample Diminta</option>
+            <option value="Sample Done">Sample Selesai</option>
+            <option value="Approved">Disetujui</option>
+            <option value="Revision">Revisi</option>
+            <option value="Ready">Ready</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[9px] pointer-events-none"></i>
+        </div>
+      </div>
+
+      <!-- Sort -->
+      <div class="flex flex-col gap-1">
+        <label class="text-[9px] font-bold uppercase text-slate-500">Urutkan</label>
+        <div class="relative">
+          <select id="sortSelect" class="w-full bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-500 appearance-none cursor-pointer">
+            <option value="update_desc">Terbaru diupdate</option>
+            <option value="id_desc">Task ID Terbesar</option>
+            <option value="id_asc">Task ID Terkecil</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[9px] pointer-events-none"></i>
+        </div>
+      </div>
+
+      <button onclick="resetFilter()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:text-white transition-all text-[10px] font-bold py-2 rounded-lg flex items-center justify-center gap-1.5 mt-1">
+        <i class="fa-solid fa-rotate-right"></i> Reset Filter
+      </button>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 min-w-0 p-3 sm:p-4">
+
+      <!-- Mobile Filter Bar -->
+      <div class="lg:hidden flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-none">
+        <div class="relative shrink-0">
+          <select id="filterProjectMobile" onchange="document.getElementById('filterProject').value=this.value; document.getElementById('filterProject').dispatchEvent(new Event('change'));"
+            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold focus:outline-none appearance-none pr-6 cursor-pointer shadow-sm">
+            <option value="all">Semua Project</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[8px] pointer-events-none"></i>
+        </div>
+        <div class="relative shrink-0">
+          <select id="filterStatusMobile" onchange="document.getElementById('filterStatus').value=this.value; document.getElementById('filterStatus').dispatchEvent(new Event('change'));"
+            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold focus:outline-none appearance-none pr-6 cursor-pointer shadow-sm">
+            <option value="all">Semua Status</option>
+            <option value="Online">Online</option>
+            <option value="Offline">Offline</option>
+            <option value="Hold">Hold</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[8px] pointer-events-none"></i>
+        </div>
+        <div class="relative shrink-0">
+          <select id="filterWorkflowMobile" onchange="document.getElementById('filterWorkflow').value=this.value; document.getElementById('filterWorkflow').dispatchEvent(new Event('change'));"
+            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold focus:outline-none appearance-none pr-6 cursor-pointer shadow-sm">
+            <option value="all">Semua Workflow</option>
+            <option value="Waiting Received">Menunggu Diterima</option>
+            <option value="Received">Diterima</option>
+            <option value="Skip">Skip</option>
+            <option value="Sample Video">Sample Diminta</option>
+            <option value="Sample Done">Sample Selesai</option>
+            <option value="Approved">Disetujui</option>
+            <option value="Revision">Revisi</option>
+            <option value="Ready">Ready</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[8px] pointer-events-none"></i>
+        </div>
+        <div class="relative shrink-0">
+          <select id="sortSelectMobile" onchange="document.getElementById('sortSelect').value=this.value; document.getElementById('sortSelect').dispatchEvent(new Event('change'));"
+            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold focus:outline-none appearance-none pr-6 cursor-pointer shadow-sm">
+            <option value="update_desc">Terbaru</option>
+            <option value="id_desc">ID Terbesar</option>
+            <option value="id_asc">ID Terkecil</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[8px] pointer-events-none"></i>
+        </div>
+        <button onclick="resetFilter()" class="shrink-0 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[10px] font-bold shadow-sm hover:bg-slate-50 transition flex items-center gap-1">
+          <i class="fa-solid fa-rotate-right text-slate-400"></i>
+        </button>
+      </div>
+
+      <!-- Loading Grid (Skeleton) -->
+      <div id="loadingGrid" class="hidden grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+
+      <!-- Task Grid -->
+      <div id="taskGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="hidden flex-col items-center justify-center py-20 text-center gap-4">
+        <div class="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center">
+          <i class="fa-solid fa-inbox text-slate-400 text-2xl"></i>
+        </div>
+        <div>
+          <div class="font-bold text-slate-600 text-sm">Data tidak ditemukan</div>
+          <div class="text-slate-400 text-xs mt-1">Coba ubah filter atau kata kunci pencarian</div>
+        </div>
+        <button onclick="resetFilter()" class="text-xs font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-rotate-right"></i> Reset Filter
+        </button>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex items-center justify-center gap-4 mt-6 mb-2">
+        <button id="prevPage" class="w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition disabled:opacity-30 disabled:cursor-not-allowed">
+          <i class="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+        <span id="pageInfo" class="text-xs font-bold text-slate-500">1 / 1</span>
+        <button id="nextPage" class="w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition disabled:opacity-30 disabled:cursor-not-allowed">
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- BOTTOM STATS BAR -->
+  <!-- ============================================================ -->
+  <div class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-slate-200 shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.06)]">
+    <div class="max-w-lg mx-auto flex justify-between items-center px-6 py-3">
+      <div class="text-center">
+        <div class="text-lg font-black text-slate-800 leading-none" id="statTotal">0</div>
+        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Total</div>
+      </div>
+      <div class="w-px h-6 bg-slate-200"></div>
+      <div class="text-center">
+        <div class="text-lg font-black text-emerald-500 leading-none" id="statOnline">0</div>
+        <div class="text-[9px] font-bold text-emerald-400 uppercase tracking-wide mt-0.5">Online</div>
+      </div>
+      <div class="w-px h-6 bg-slate-200"></div>
+      <div class="text-center">
+        <div class="text-lg font-black text-amber-500 leading-none" id="statHold">0</div>
+        <div class="text-[9px] font-bold text-amber-400 uppercase tracking-wide mt-0.5">Hold</div>
+      </div>
+      <div class="w-px h-6 bg-slate-200"></div>
+      <div class="text-center">
+        <div class="text-lg font-black text-purple-600 leading-none" id="statSample">0</div>
+        <div class="text-[9px] font-bold text-purple-400 uppercase tracking-wide mt-0.5">Sample</div>
+      </div>
+      <div class="w-px h-6 bg-slate-200"></div>
+      <div class="text-center">
+        <div class="text-lg font-black text-sky-600 leading-none" id="statReady">0</div>
+        <div class="text-[9px] font-bold text-sky-400 uppercase tracking-wide mt-0.5">Ready</div>
+      </div>
     </div>
-    
-    <div class="overflow-y-auto p-4 sm:p-6 flex-1 bg-white">
-      <input type="hidden" id="editTaskId" />
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div class="space-y-3">
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-            <h4 class="font-bold text-[10px] text-slate-500 uppercase"><i class="fa-solid fa-lock"></i> Detail Task (Tidak Bisa Diedit)</h4>
-            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Task ID</label><input id="form_taskId" class="w-full text-xs border rounded-lg px-2 py-2 focus:outline-sky-300" /></div>
-            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Task Name</label><input id="form_taskName" class="w-full text-xs border rounded-lg px-2 py-2 focus:outline-sky-300" /></div>
-            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Description</label><textarea id="form_desc" rows="2" class="w-full text-xs border rounded-lg px-2 py-2 focus:outline-sky-300"></textarea></div>
-            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200">
-              <div><label class="text-[9px] font-bold text-slate-500 uppercase">Task Goal</label><input id="form_goal" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
-              <div><label class="text-[9px] font-bold text-slate-500 uppercase">Initialize Status</label><input id="form_initStatus" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
-              <div><label class="text-[9px] font-bold text-slate-500 uppercase">Generalization Direction</label><input id="form_genDir" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
-              <div><label class="text-[9px] font-bold text-slate-500 uppercase">Task Type</label><input id="form_type" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
-              <div><label class="text-[9px] font-bold text-slate-500 uppercase">Num</label><input id="form_num" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
-              <div><label class="text-[9px] font-bold text-slate-500 uppercase">Label</label><input id="form_label" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
-              <div><label class="text-[9px] font-bold text-slate-500 uppercase">Pullable Num</label><input id="form_pull" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
-              <div><label class="text-[9px] font-bold text-slate-500 uppercase">Environment Type</label><input id="form_env" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: LOGIN -->
+  <!-- ============================================================ -->
+  <div id="loginModal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4 modal-overlay">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('loginModal')"></div>
+    <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col z-10 modal-box">
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-8 text-white text-center">
+        <div class="w-14 h-14 bg-gradient-to-br from-sky-400 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xl shadow-blue-800/40">
+          <i class="fa-solid fa-layer-group text-white text-xl"></i>
+        </div>
+        <div class="font-black text-lg tracking-tight">Task Management</div>
+        <div class="text-sky-400 text-xs font-semibold tracking-widest uppercase mt-0.5">Produksi V2</div>
+      </div>
+      <div class="p-6 flex flex-col gap-4">
+        <div class="text-center text-xs text-slate-500 font-medium">Masuk untuk mengelola task produksi</div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[10px] font-bold uppercase text-slate-500">Username</label>
+          <input id="loginUsername" type="text" placeholder="username" autocomplete="username"
+            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-sky-400 transition-colors" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[10px] font-bold uppercase text-slate-500">Password</label>
+          <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password"
+            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-sky-400 transition-colors" />
+        </div>
+        <button onclick="processLogin()" class="w-full py-3 bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl hover:opacity-90 transition shadow-lg shadow-blue-500/20 text-sm">
+          <i class="fa-solid fa-right-to-bracket mr-1.5"></i> Masuk
+        </button>
+        <button onclick="closeModal('loginModal')" class="w-full py-2 text-xs text-slate-400 hover:text-slate-600 transition font-medium">
+          Lanjutkan sebagai Guest
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: DETAIL TASK -->
+  <!-- ============================================================ -->
+  <div id="detailModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4 modal-overlay">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('detailModal')"></div>
+    <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[92vh] z-10 modal-box">
+
+      <!-- Header -->
+      <div class="px-5 pt-5 pb-4 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
+        <div class="flex-1 min-w-0">
+          <div id="modalTaskId" class="font-black text-2xl text-slate-800 leading-none"></div>
+          <div id="modalProjectName" class="text-[10px] font-bold text-sky-600 uppercase tracking-wider mt-1 flex items-center gap-1">
+            <i class="fa-solid fa-folder text-sky-400"></i>
+            <span class="truncate"></span>
+          </div>
+          <div id="modalUpdatedBy" class="text-[9px] text-slate-400 mt-1 flex items-center gap-1 flex-wrap"></div>
+        </div>
+        <button onclick="closeModal('detailModal')" class="w-8 h-8 hover:bg-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors shrink-0 mt-0.5">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Scrollable Body -->
+      <div class="overflow-y-auto flex-1">
+
+        <!-- Notifikasi Sample untuk QC -->
+        <div id="modalNotif" class="hidden mx-4 mt-4 items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold px-4 py-3 rounded-xl">
+          <i class="fa-solid fa-bell animate-pulse shrink-0"></i>
+          <span>Leader meminta pembuatan sample untuk task ini</span>
+        </div>
+
+        <!-- Badges Status & Workflow -->
+        <div id="modalBadges" class="flex gap-2 px-5 py-4 flex-wrap"></div>
+
+        <!-- Video Preview -->
+        <div class="px-5 pb-4">
+          <div class="text-[9px] font-bold uppercase text-slate-400 mb-2 tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-video text-slate-300"></i> Video Preview
+          </div>
+          <div id="modalVideoThumb" class="bg-slate-900 rounded-2xl aspect-video w-full flex items-center justify-center overflow-hidden text-slate-500 text-xs">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+          </div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="px-5 pb-4">
+          <div class="text-[9px] font-bold uppercase text-slate-400 mb-2 tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-qrcode text-slate-300"></i> QR Code
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center justify-center min-h-[80px] cursor-pointer" onclick="openQRFullscreen()">
+            <img id="modalQRImg" src="" alt="QR Code" class="hidden max-h-40 rounded-lg object-contain" />
+            <div id="modalQREmpty" class="text-slate-400 text-xs flex flex-col items-center gap-1.5">
+              <i class="fa-solid fa-qrcode text-3xl text-slate-200"></i>
+              <span>Kosong</span>
             </div>
           </div>
         </div>
 
-        <div class="space-y-3">
-          <div class="bg-amber-50 p-3 rounded-xl border border-amber-100 space-y-2">
-            <h4 class="font-bold text-[10px] text-amber-800 uppercase"><i class="fa-solid fa-satellite-dish"></i> Status & Link</h4>
-            <div class="flex gap-2">
-              <div class="w-1/2"><label class="text-[9px] font-bold text-slate-500 uppercase">Status</label><select id="form_status" class="w-full text-xs bg-white border rounded-lg p-1.5"><option>Online</option><option>Offline</option><option>Hold</option></select></div>
-              <div class="w-1/2">
-                <label class="text-[9px] font-bold text-slate-500 uppercase">Workflow</label>
-                <select id="form_wf" class="w-full text-xs bg-white border rounded-lg p-1.5">
+        <!-- Client Note -->
+        <div class="px-5 pb-4 grid grid-cols-1 gap-3">
+          <div class="bg-blue-50 border border-blue-100 rounded-xl p-3.5">
+            <div class="text-[9px] font-bold uppercase text-blue-500 mb-1 flex items-center gap-1"><i class="fa-solid fa-message-lines"></i> Client Note</div>
+            <div id="modalClientNote" class="text-xs text-blue-800 font-medium leading-relaxed whitespace-pre-line"></div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+            <div class="text-[9px] font-bold uppercase text-slate-400 mb-1 flex items-center gap-1"><i class="fa-solid fa-note-sticky"></i> Catatan Internal</div>
+            <div id="modalCatatan" class="text-xs text-slate-600 leading-relaxed whitespace-pre-line"></div>
+          </div>
+        </div>
+
+        <!-- Spesifikasi Task -->
+        <div class="px-5 pb-4">
+          <div class="text-[9px] font-bold uppercase text-slate-400 mb-2 tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-list-check text-slate-300"></i> Spesifikasi
+          </div>
+          <div id="metaGrid" class="bg-slate-50 border border-slate-100 rounded-2xl p-4 grid grid-cols-2 gap-x-4 gap-y-3"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div id="modalActions" class="px-5 pb-6 flex gap-2 flex-wrap"></div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: FORM BUAT / EDIT TASK -->
+  <!-- ============================================================ -->
+  <div id="editModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4 modal-overlay">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('editModal')"></div>
+    <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[92vh] z-10 modal-box">
+
+      <!-- Header Form -->
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+        <h3 id="editModalTitle" class="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-plus"></i> Buat Task Baru
+        </h3>
+        <button onclick="closeModal('editModal')" class="w-7 h-7 hover:bg-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Form Body -->
+      <div class="overflow-y-auto flex-1 p-5">
+        <input type="hidden" id="editTaskId" />
+
+        <!-- Section: Detail Task -->
+        <div class="mb-5">
+          <div class="text-[9px] font-bold uppercase text-slate-400 mb-3 tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-lock text-slate-300"></i> Detail Task (Tidak Bisa Diedit)
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="col-span-2 flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Task ID *</label>
+              <input id="form_taskId" type="text" placeholder="Contoh: 1001" class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full" />
+            </div>
+            <div class="col-span-2 flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Task Name *</label>
+              <input id="form_taskName" type="text" placeholder="Nama task" class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full" />
+            </div>
+            <div class="col-span-2 flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Description</label>
+              <textarea id="form_desc" rows="2" placeholder="Deskripsi singkat" class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full resize-none"></textarea>
+            </div>
+            <div class="col-span-2 flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Task Goal</label>
+              <input id="form_goal" type="text" placeholder="Tujuan task" class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Initialize Status</label>
+              <input id="form_initStatus" type="text" placeholder="Status awal" class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Generalization Direction</label>
+              <input id="form_genDir" type="text" placeholder="Cth: Horizontal" class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Task Type</label>
+              <input id="form_type" type="text" placeholder="Jenis task" class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Num</label>
+              <input id="form_num" type="text" placeholder="Nomor" class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Label</label>
+              <input id="form_label" type="text" placeholder="Label" class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Pullable Num</label>
+              <input id="form_pull" type="text" placeholder="Pullable Num" class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full" />
+            </div>
+            <div class="col-span-2 flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Environment Type</label>
+              <input id="form_env" type="text" placeholder="Cth: Studio, Outdoor" class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full" />
+            </div>
+          </div>
+        </div>
+
+        <hr class="border-slate-100 mb-5" />
+
+        <!-- Section: Status & Link -->
+        <div>
+          <div class="text-[9px] font-bold uppercase text-slate-400 mb-3 tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-pen-to-square text-slate-300"></i> Status & Link
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Project Name -->
+            <div class="col-span-2 flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Project Name *</label>
+              <div class="relative">
+                <select id="form_project" onchange="toggleNewProjectInput()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 appearance-none cursor-pointer transition">
+                  <option value="">Pilih Project</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
+              </div>
+              <input id="form_projectNew" type="text" placeholder="Nama project baru..." class="hidden border border-sky-300 bg-sky-50 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-500 transition w-full mt-1" />
+            </div>
+
+            <!-- Status -->
+            <div class="flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Status</label>
+              <div class="relative">
+                <select id="form_status" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 appearance-none cursor-pointer transition">
+                  <option value="Online">Online</option>
+                  <option value="Offline">Offline</option>
+                  <option value="Hold">Hold</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
+              </div>
+            </div>
+
+            <!-- Workflow -->
+            <div class="flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Workflow</label>
+              <div class="relative">
+                <select id="form_wf" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 appearance-none cursor-pointer transition">
                   <option value="Waiting Received">Menunggu Diterima</option>
                   <option value="Received">Diterima</option>
                   <option value="Skip">Skip</option>
@@ -208,483 +509,84 @@
                   <option value="Revision">Revisi</option>
                   <option value="Ready">Ready</option>
                 </select>
+                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
               </div>
             </div>
-            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Video URL (YouTube / Google Drive / mp4)</label><input id="form_video" type="url" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
-            <div><label class="text-[9px] font-bold text-slate-500 uppercase">QR Image URL (Google Drive / gambar langsung)</label><input id="form_qr" type="url" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
-            <div><label class="text-[9px] font-bold text-slate-500 uppercase">List Barang</label><input id="form_barang" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
-          </div>
 
-          <div><label class="text-[9px] font-bold text-slate-500 uppercase">Catatan Internal</label><textarea id="form_catatan" rows="2" class="w-full text-xs border rounded-lg p-2 focus:outline-sky-300"></textarea></div>
-          <div>
-            <label class="text-[9px] font-bold text-slate-500 uppercase">Project Name</label>
-            <select id="form_project" onchange="toggleNewProjectInput()" class="w-full text-xs bg-white border rounded-lg px-2 py-2 focus:outline-sky-300"></select>
-            <input id="form_projectNew" type="text" placeholder="Nama project baru..." class="hidden w-full text-xs border rounded-lg px-2 py-2 mt-2 focus:outline-sky-300" />
-          </div>
-          <div class="relative bg-purple-50 p-3 rounded-xl border border-purple-100">
-             <label class="text-[9px] font-bold text-purple-800 uppercase flex justify-between">Client Note <span id="form_lockInfo" class="text-purple-500"><i class="fa-solid fa-lock"></i> Only Approver</span></label>
-             <textarea id="form_clientNote" rows="2" class="w-full text-xs border rounded-lg p-2 mt-1 focus:outline-purple-300"></textarea>
+            <!-- Video URL -->
+            <div class="col-span-2 flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Video URL (YouTube / Google Drive / mp4)</label>
+              <input id="form_video" type="url" placeholder="https://..." class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full" />
+            </div>
+
+            <!-- QR URL -->
+            <div class="col-span-2 flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">QR Image URL (Google Drive / gambar langsung)</label>
+              <input id="form_qr" type="url" placeholder="https://drive.google.com/..." class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full" />
+            </div>
+
+            <!-- List Barang -->
+            <div class="col-span-2 flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">List Barang</label>
+              <textarea id="form_barang" rows="2" placeholder="Daftar barang yang digunakan" class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full resize-none"></textarea>
+            </div>
+
+            <!-- Catatan Internal -->
+            <div class="col-span-2 flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400">Catatan Internal</label>
+              <textarea id="form_catatan" rows="2" placeholder="Catatan untuk tim internal" class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full resize-none"></textarea>
+            </div>
+
+            <!-- Client Note -->
+            <div class="col-span-2 flex flex-col gap-1">
+              <label class="text-[9px] font-bold uppercase text-slate-400 flex items-center gap-1.5">
+                Client Note
+                <span id="form_lockInfo" class="text-[8px] text-slate-400 font-medium flex items-center gap-0.5">
+                  <i class="fa-solid fa-lock text-[8px]"></i> Only Approver
+                </span>
+              </label>
+              <textarea id="form_clientNote" rows="2" placeholder="Catatan dari client" readonly class="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-400 transition w-full resize-none bg-slate-100 cursor-not-allowed"></textarea>
+            </div>
+
           </div>
         </div>
       </div>
-    </div>
-    
-    <div class="p-3 bg-slate-50 border-t flex justify-end gap-2">
-      <button onclick="closeModal('editModal')" class="px-4 py-2 text-xs font-bold text-slate-600 bg-white border rounded-lg">Batal</button>
-      <button onclick="saveTask()" class="px-4 py-2 text-xs font-bold text-white bg-sky-500 rounded-lg shadow-md"><i class="fa-solid fa-floppy-disk"></i> Simpan Data</button>
-    </div>
-  </div>
-</div>
 
-<div id="loginModal" class="modal-overlay fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
-  <div class="modal-box bg-white rounded-3xl w-full max-w-xs p-6 text-center shadow-2xl relative overflow-hidden">
-    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-400 to-blue-600"></div>
-    <div class="w-12 h-12 bg-sky-50 text-sky-500 rounded-full flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-user-lock"></i></div>
-    <h2 class="text-lg font-black text-slate-800 mb-4">Login Akses</h2>
-    <div class="space-y-3 text-left">
-      <input id="loginUsername" type="text" placeholder="Username" class="w-full border-b-2 border-slate-200 bg-slate-50 rounded-t-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-400 transition" />
-      <input id="loginPassword" type="password" placeholder="Password" class="w-full border-b-2 border-slate-200 bg-slate-50 rounded-t-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-400 transition" />
-      <button onclick="processLogin()" class="w-full bg-slate-800 text-white font-bold py-2.5 rounded-xl text-sm mt-2 hover:bg-slate-700 transition">Masuk</button>
-      <button onclick="closeModal('loginModal')" class="w-full text-slate-400 text-xs font-bold mt-2 hover:text-slate-600">Batal</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast" class="fixed top-20 right-4 z-[99] hidden">
-  <div id="toastContent" class="flex items-center gap-2 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl">
-    <span id="toastIcon" class="text-base"></span>
-    <span id="toastMsg"></span>
-  </div>
-</div>
-
-<script>
-// ================= STATE & CONFIG =================
-let STATE = {
-  apiUrl: 'https://script.google.com/macros/s/AKfycbxW8lHN-0wf4TnLRpmRk04Ms0tSLmxNeCjikOzTd9x1mdodmMKJfWeQy-aiE5ukQUT4/exec', // <-- GANTI DENGAN URL WEB APP BARU ANDA
-  allTasks: [], filteredTasks: [], projects: [],
-  role: 'public', userName: 'Guest', username: '',
-  search: '', project: '', status: '', workflow: '', sort: 'update_desc',
-  page: 1, perPage: 30 // GRID 5x6 = 30 Items
-};
-
-const USERS = {
-  'qc1': { password: '123', role: 'qc', name: 'QC Satu' },
-  'app1': { password: '123', role: 'approved', name: 'Approver' },
-  'leader1': { password: '123', role: 'leader', name: 'Leader' }
-};
-
-const UI_COLORS = {
-  'Online':{c:'bg-emerald-100 text-emerald-700 border-emerald-200', i:'fa-wifi'}, 'Offline':{c:'bg-slate-100 text-slate-600 border-slate-200', i:'fa-power-off'}, 'Hold':{c:'bg-amber-100 text-amber-700 border-amber-200', i:'fa-pause'},
-  'Waiting Received':{c:'bg-slate-100 text-slate-600 border-slate-200'}, 'Received':{c:'bg-blue-100 text-blue-700 border-blue-200'}, 'Ready':{c:'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'},
-  'Sample Video':{c:'bg-purple-100 text-purple-700 border-purple-200'}, 'Sample Done':{c:'bg-teal-100 text-teal-700 border-teal-200'}, 'Approved':{c:'bg-green-100 text-green-700 border-green-200'}, 'Revision':{c:'bg-red-100 text-red-700 border-red-200'}
-};
-
-// Label tampilan untuk workflow (nilai data di sheet TIDAK berubah, hanya label di UI)
-const WF_LABELS = {
-  'Waiting Received':'Menunggu Diterima', 'Received':'Diterima', 'Skip':'Skip',
-  'Sample Video':'Sample Diminta', 'Sample Done':'Sample Selesai',
-  'Approved':'Disetujui', 'Revision':'Revisi', 'Ready':'Ready'
-};
-function wfLabel(w){ return WF_LABELS[w] || w || '-'; }
-
-// (4) Label pengupdate: "by: qc1" untuk QC/Leader, "by: approved" untuk role Approver
-function actorLabel() {
-  if(STATE.role === 'approved') return 'approved';
-  return STATE.username || STATE.role || 'sistem';
-}
-
-// ================= INIT & LISTENERS =================
-window.onload = () => {
-  // Setup enter to login
-  document.getElementById('loginPassword').addEventListener('keypress', e => { if (e.key === 'Enter') processLogin(); });
-  
-  // Search
-  const sInput = document.getElementById('searchInput');
-  sInput.addEventListener('input', e => { STATE.search = e.target.value.toLowerCase().trim(); document.getElementById('searchClear').classList.toggle('hidden', !STATE.search); STATE.page=1; applyFilter(); });
-  
-  // Filter Triggers
-  ['filterProject','filterStatus','filterWorkflow','sortSelect'].forEach(id => {
-    document.getElementById(id).addEventListener('change', e => { STATE[id.replace('filter','').toLowerCase()] = e.target.value === 'all' ? '' : e.target.value; STATE.page=1; applyFilter(); });
-  });
-
-  document.getElementById('prevPage').addEventListener('click', () => { if(STATE.page>1){ STATE.page--; renderGrid(); } });
-  document.getElementById('nextPage').addEventListener('click', () => { if(STATE.page < Math.ceil(STATE.filteredTasks.length/STATE.perPage)){ STATE.page++; renderGrid(); } });
-
-  updateRoleUI();
-  loadData();
-};
-
-function toggleSearch() { 
-  const el = document.getElementById('searchPopover');
-  el.classList.toggle('hidden'); 
-  if(!el.classList.contains('hidden')) document.getElementById('searchInput').focus();
-}
-function clearSearch() { document.getElementById('searchInput').value=''; STATE.search=''; document.getElementById('searchClear').classList.add('hidden'); STATE.page=1; applyFilter(); }
-
-// (2) RESET FILTER
-function resetFilter() {
-  STATE.search=''; STATE.project=''; STATE.status=''; STATE.workflow=''; STATE.sort='update_desc'; STATE.page=1;
-  document.getElementById('searchInput').value = '';
-  document.getElementById('searchClear').classList.add('hidden');
-  document.getElementById('filterProject').value = 'all';
-  document.getElementById('filterStatus').value = 'all';
-  document.getElementById('filterWorkflow').value = 'all';
-  document.getElementById('sortSelect').value = 'update_desc';
-  applyFilter();
-  showToast('<i class="fa-solid fa-rotate-right"></i>', 'Filter direset', 'bg-slate-600');
-}
-
-// ================= LOGIN =================
-function processLogin() {
-  const u = document.getElementById('loginUsername').value.trim(), p = document.getElementById('loginPassword').value;
-  if(USERS[u] && USERS[u].password === p) {
-    STATE.role = USERS[u].role; STATE.userName = USERS[u].name; STATE.username = u;
-    document.getElementById('loginBtn').classList.add('hidden');
-    document.getElementById('logoutBtn').classList.remove('hidden');
-    document.getElementById('userInfo').innerHTML = `<i class="fa-solid fa-user-check"></i> ${USERS[u].name}`;
-    document.getElementById('userInfo').classList.remove('hidden');
-    showToast('<i class="fa-solid fa-check"></i>', `Halo, ${USERS[u].name}`, 'bg-emerald-600');
-    closeModal('loginModal'); updateRoleUI(); renderGrid();
-  } else showToast('<i class="fa-solid fa-xmark"></i>', 'Gagal login!', 'bg-red-500');
-}
-function logout() {
-  STATE.role = 'public'; STATE.userName = 'Guest'; STATE.username = '';
-  document.getElementById('loginBtn').classList.remove('hidden');
-  document.getElementById('logoutBtn').classList.add('hidden');
-  document.getElementById('userInfo').classList.add('hidden');
-  updateRoleUI(); renderGrid();
-}
-function updateRoleUI() {
-  const btn = document.getElementById('addTaskBtn');
-  if(STATE.role === 'qc' || STATE.role === 'approved') { btn.classList.remove('hidden'); btn.classList.add('flex'); } else { btn.classList.add('hidden'); btn.classList.remove('flex'); }
-}
-
-// ================= DATA (6: PERFORMA LOADING) =================
-function persistLocal() { try { localStorage.setItem('localT', JSON.stringify(STATE.allTasks)); } catch(e){} }
-
-async function loadData() {
-  // Stale-while-revalidate: tampilkan data cache dulu (instan, tanpa skeleton) kalau ada,
-  // baru sinkron ke server di belakang layar. Skeleton hanya muncul kalau benar-benar belum ada data.
-  const cached = localStorage.getItem('localT');
-  if(cached) {
-    try { STATE.allTasks = JSON.parse(cached); setupProjFilter(); applyFilter(); } catch(e){}
-  } else {
-    showLoading(true);
-  }
-
-  try {
-    const res = await fetch(STATE.apiUrl);
-    const j = await res.json();
-    if(!j.success) throw 1;
-    STATE.allTasks = j.data;
-    STATE.projects = j.projects || STATE.projects || [];
-    persistLocal();
-    setupProjFilter(); applyFilter();
-  } catch(e) {
-    if(!STATE.allTasks.length) {
-      const l = localStorage.getItem('localT'); if(l) STATE.allTasks = JSON.parse(l);
-      applyFilter();
-    }
-    showToast('<i class="fa-solid fa-triangle-exclamation"></i>', 'Gagal memuat data terbaru', 'bg-orange-500');
-  } finally {
-    showLoading(false);
-  }
-}
-function setupProjFilter() {
-  const sel = document.getElementById('filterProject');
-  const fromTasks = STATE.allTasks.map(t=>t['Project Name']).filter(Boolean);
-  const projs = [...new Set([...(STATE.projects||[]), ...fromTasks])];
-  sel.innerHTML = '<option value="all">Semua Project</option>' + projs.map(p=>`<option value="${p}">${p}</option>`).join('');
-}
-
-// (2) Project = tab/sheet tersendiri. Isi dropdown project di form edit/buat task,
-// termasuk opsi untuk membuat project (tab) baru.
-function populateProjectSelect(selected) {
-  const sel = document.getElementById('form_project');
-  const fromTasks = STATE.allTasks.map(t=>t['Project Name']).filter(Boolean);
-  const projs = [...new Set([...(STATE.projects||[]), ...fromTasks])];
-  let html = projs.map(p=>`<option value="${p}">${p}</option>`).join('');
-  html += `<option value="__new__">+ Buat Project Baru</option>`;
-  sel.innerHTML = html;
-  if(selected && projs.includes(selected)) {
-    sel.value = selected;
-  } else if(selected) {
-    sel.insertAdjacentHTML('afterbegin', `<option value="${selected}">${selected}</option>`);
-    sel.value = selected;
-  }
-  toggleNewProjectInput();
-}
-function toggleNewProjectInput() {
-  const sel = document.getElementById('form_project'), inp = document.getElementById('form_projectNew');
-  if(sel.value === '__new__') { inp.classList.remove('hidden'); inp.focus(); } else { inp.classList.add('hidden'); inp.value=''; }
-}
-function applyFilter() {
-  let ts = [...STATE.allTasks];
-  if(STATE.search) {
-    const q = STATE.search;
-    ts = ts.filter(t =>
-      String(t['Task ID']||'').toLowerCase().includes(q) ||
-      String(t['Nama Task']||'').toLowerCase().includes(q) ||
-      String(t['Task Name']||'').toLowerCase().includes(q) ||
-      String(t['Project Name']||'').toLowerCase().includes(q)
-    );
-  }
-  if(STATE.project) ts = ts.filter(t => t['Project Name'] === STATE.project);
-  if(STATE.status) ts = ts.filter(t => t['Status'] === STATE.status);
-  if(STATE.workflow) ts = ts.filter(t => t['Workflow'] === STATE.workflow);
-  
-  ts.sort((a,b) => {
-    if(STATE.sort === 'id_desc') return (parseInt(b['Task ID'])||0) - (parseInt(a['Task ID'])||0);
-    if(STATE.sort === 'id_asc') return (parseInt(a['Task ID'])||0) - (parseInt(b['Task ID'])||0);
-    return String(b['Last Update']||'').localeCompare(String(a['Last Update']||''));
-  });
-  STATE.filteredTasks = ts;
-  
-  document.getElementById('statTotal').innerText = ts.length;
-  document.getElementById('statOnline').innerText = ts.filter(t=>t['Status']==='Online').length;
-  document.getElementById('statHold').innerText = ts.filter(t=>t['Status']==='Hold').length;
-  document.getElementById('statSample').innerText = ts.filter(t=>t['Workflow']==='Sample Video').length;
-  document.getElementById('statReady').innerText = ts.filter(t=>t['Workflow']==='Ready').length;
-  renderGrid();
-}
-
-// ================= HELPER: VIDEO & GAMBAR (3 & 4) =================
-function ytEmbedId(url) {
-  const patterns = [
-    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
-  ];
-  for (const p of patterns) { const m = url.match(p); if(m) return m[1]; }
-  return null;
-}
-function driveFileId(url) {
-  const patterns = [
-    /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
-    /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
-    /drive\.google\.com\/uc\?[^#]*[?&]id=([a-zA-Z0-9_-]+)/,
-    /[?&]id=([a-zA-Z0-9_-]+)/
-  ];
-  for (const p of patterns) { const m = url.match(p); if(m) return m[1]; }
-  return null;
-}
-function getVideoEmbedHtml(url) {
-  if(!url) return '<div class="text-slate-500 text-xs"><i class="fa-solid fa-video-slash text-2xl mb-1 block"></i>Kosong</div>';
-  const yt = ytEmbedId(url);
-  if(yt) return `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${yt}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-  const gd = driveFileId(url);
-  if(gd) return `<iframe class="w-full h-full" src="https://drive.google.com/file/d/${gd}/preview" allow="autoplay" allowfullscreen></iframe>`;
-  if(/\.(mp4|webm|ogg)(\?|$)/i.test(url)) return `<video class="w-full h-full" controls src="${url}"></video>`;
-  return `<div class="text-slate-400 text-xs flex flex-col items-center gap-2 px-4 text-center"><i class="fa-solid fa-link text-2xl"></i>Format video tidak dikenali<a href="${url}" target="_blank" rel="noopener" class="text-sky-400 underline">Buka link di tab baru</a></div>`;
-}
-function getImageDisplayUrl(url) {
-  if(!url) return null;
-  const gd = driveFileId(url);
-  if(gd) return `https://drive.google.com/thumbnail?id=${gd}&sz=w1000`;
-  return url;
-}
-
-// ================= UI RENDER =================
-function showLoading(show) {
-  const g = document.getElementById('taskGrid'), s = document.getElementById('loadingGrid');
-  if(show) { g.classList.add('hidden'); s.classList.remove('hidden'); s.innerHTML = Array(10).fill(`<div class="bg-white rounded-xl p-3 border shadow-sm"><div class="skeleton h-4 w-1/3 rounded mb-2"></div><div class="skeleton h-3 w-1/2 rounded mb-3"></div><div class="skeleton h-6 w-full rounded"></div></div>`).join(''); } 
-  else { g.classList.remove('hidden'); s.classList.add('hidden'); }
-}
-function renderGrid() {
-  showLoading(false);
-  const total = STATE.filteredTasks.length, empty = document.getElementById('emptyState');
-  if(total === 0) { document.getElementById('taskGrid').innerHTML=''; empty.classList.remove('hidden'); empty.classList.add('flex'); document.getElementById('pageInfo').innerText = '0 / 0'; document.getElementById('prevPage').disabled = true; document.getElementById('nextPage').disabled = true; return; }
-  empty.classList.add('hidden'); empty.classList.remove('flex');
-
-  const start = (STATE.page - 1) * STATE.perPage, paged = STATE.filteredTasks.slice(start, start + STATE.perPage);
-  let h = '';
-  paged.forEach(t => {
-    const isLock = STATE.role === 'public' && t['Workflow'] !== 'Ready';
-    const needsSample = t['Workflow'] === 'Sample Video' && STATE.role === 'qc';
-    const c1 = UI_COLORS[t['Status']] || UI_COLORS['Offline'], c2 = UI_COLORS[t['Workflow']] || UI_COLORS['Waiting Received'];
-    h += `<div class="bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col p-3.5 relative ${isLock ? 'opacity-60 bg-slate-50' : 'card-hover cursor-pointer shadow-sm'}" ${isLock?'':`onclick="openDetail('${t['Task ID']}')"`}>
-      ${isLock?'<i class="fa-solid fa-lock absolute top-3 right-3 text-slate-300"></i>':''}
-      ${needsSample?'<span class="absolute top-3 right-3 flex items-center gap-1 text-[8px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full animate-pulse"><i class="fa-solid fa-bell"></i> Sample</span>':''}
-      <div class="text-xl font-black text-slate-800 leading-none mb-1">#${t['Task ID']}</div>
-      <div class="text-[8px] font-bold text-sky-600 uppercase tracking-wider mb-2 truncate">${t['Project Name']||'-'}</div>
-      <div class="text-[11px] font-semibold text-slate-600 mb-3 line-clamp-2 leading-snug">${t['Nama Task']||t['Task Name']||'-'}</div>
-      <div class="flex gap-1 mb-2 mt-auto flex-wrap">
-        <span class="text-[9px] font-bold px-2 py-0.5 rounded-md border ${c1.c}"><i class="fa-solid ${c1.i||''}"></i> ${t['Status']}</span>
-        <span class="text-[9px] font-bold px-2 py-0.5 rounded-md border ${c2.c||'bg-slate-100'}">${wfLabel(t['Workflow'])}</span>
+      <!-- Footer Actions -->
+      <div class="px-5 py-4 border-t border-slate-100 flex gap-3 shrink-0">
+        <button onclick="closeModal('editModal')" class="flex-1 py-2.5 border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition">
+          Batal
+        </button>
+        <button onclick="saveTask()" class="flex-1 py-2.5 bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xs font-bold rounded-xl hover:opacity-90 transition shadow-lg shadow-blue-500/20 flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-floppy-disk"></i> Simpan Data
+        </button>
       </div>
-      <div class="text-[8px] text-slate-400 mt-1 border-t pt-2 flex justify-between items-center">
-        <span>${t['Last Update']?.split(' ')[0]||'-'}</span>
-        <span class="truncate max-w-[100px] font-semibold"><i class="fa-solid fa-user-pen"></i> ${t['Updated By']||'-'}</span>
-      </div>
-    </div>`;
-  });
-  document.getElementById('taskGrid').innerHTML = h;
-  document.getElementById('pageInfo').innerText = `${STATE.page} / ${Math.ceil(total/STATE.perPage)||1}`;
-  document.getElementById('prevPage').disabled = STATE.page === 1;
-  document.getElementById('nextPage').disabled = STATE.page >= Math.ceil(total/STATE.perPage);
-}
+    </div>
+  </div>
 
-// ================= MODAL DETAIL & ACTIONS =================
-function bItem(l,v) { return `<div><div class="text-[8px] uppercase font-bold text-slate-400">${l}</div><div class="text-[11px] font-semibold text-slate-700 leading-tight">${v||'-'}</div></div>`; }
-function openDetail(id) {
-  const t = STATE.allTasks.find(x => String(x['Task ID']) === String(id)); if(!t) return;
+  <!-- ============================================================ -->
+  <!-- TOAST NOTIFICATION -->
+  <!-- ============================================================ -->
+  <div id="toast" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 z-[80]">
+    <div id="toastContent" class="flex items-center gap-2 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl bg-slate-800">
+      <span id="toastIcon"></span>
+      <span id="toastMsg"></span>
+    </div>
+  </div>
 
-  // (10) Notifikasi permintaan sample dari leader, khusus terlihat oleh QC
-  const notif = document.getElementById('modalNotif');
-  if(t['Workflow'] === 'Sample Video' && STATE.role === 'qc') {
-    notif.innerHTML = '<i class="fa-solid fa-bell"></i> Leader meminta pembuatan sample untuk task ini';
-    notif.classList.remove('hidden'); notif.classList.add('flex');
-  } else {
-    notif.classList.add('hidden'); notif.classList.remove('flex');
-  }
-  
-  // Update By Info
-  document.getElementById('modalUpdatedBy').innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> Diupdate oleh <b>${t['Updated By']||'Sistem'}</b> pada ${t['Last Update']||'-'}`;
-  
-  document.getElementById('modalTaskId').innerText = '#'+t['Task ID']; document.getElementById('modalProjectName').querySelector('span').innerText = t['Project Name']||'-';
-  const c1 = UI_COLORS[t['Status']]||UI_COLORS['Offline'], c2 = UI_COLORS[t['Workflow']]||UI_COLORS['Waiting Received'];
-  document.getElementById('modalBadges').innerHTML = `<span class="text-[10px] font-bold px-2.5 py-1 rounded-md border ${c1.c}"><i class="fa-solid ${c1.i||''}"></i> ${t['Status']}</span><span class="text-[10px] font-bold px-2.5 py-1 rounded-md border ${c2.c||'bg-slate-100'}">${wfLabel(t['Workflow'])}</span>`;
-  // (9) Spesifikasi ditampilkan sesuai urutan kolom tabel, kolom yang tidak bisa diedit
-  document.getElementById('metaGrid').innerHTML = bItem('Task Name',t['Task Name']) + bItem('Description',t['Description']) + bItem('Task Goal',t['Task Goal']) + bItem('Initialize Status',t['Initialize Status']) + bItem('Generalization Direction',t['Generalization Direction']) + bItem('Task Type',t['Task Type']) + bItem('Num',t['Num']) + bItem('Label',t['Label']) + bItem('Pullable Num',t['Pullable Num']) + bItem('Environment Type',t['Environment Type']) + bItem('List Barang',t['List Barang']);
-  
-  // (3) Video YouTube / Google Drive / mp4 langsung
-  document.getElementById('modalVideoThumb').innerHTML = getVideoEmbedHtml(t['Video URL']);
-  
-  document.getElementById('modalClientNote').innerText = t['Client Note']||'-'; document.getElementById('modalCatatan').innerText = t['Catatan']||'-';
+  <!-- ============================================================ -->
+  <!-- SCRIPTS (order matters!) -->
+  <!-- ============================================================ -->
+  <script src="config/config.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/filter.js"></script>
+  <script src="assets/js/task.js"></script>
+  <script src="assets/js/modal.js"></script>
+  <script src="assets/js/realtime.js"></script>
+  <script src="assets/js/csv-import.js"></script>
+  <script src="assets/js/app.js"></script>
 
-  // (4) QR dari Google Drive dikonversi ke URL gambar langsung
-  const qr = document.getElementById('modalQRImg');
-  const qrUrl = getImageDisplayUrl(t['QR Code URL']);
-  if(qrUrl) { qr.src = qrUrl; qr.classList.remove('hidden'); document.getElementById('modalQREmpty').classList.add('hidden'); } else { qr.classList.add('hidden'); document.getElementById('modalQREmpty').classList.remove('hidden'); }
-
-  // ================= (1,7,10) AKSI PER ROLE & STATUS WORKFLOW =================
-  let b = '';
-  if(STATE.role==='leader') {
-    b = `<button onclick="updWf('${id}','Sample Video')" class="text-[10px] font-bold text-white bg-sky-500 px-3 py-2 rounded-lg"><i class="fa-solid fa-clapperboard"></i> Request Sample</button>
-         <button onclick="updWf('${id}','Revision')" class="text-[10px] font-bold text-white bg-red-500 px-3 py-2 rounded-lg"><i class="fa-solid fa-rotate-left"></i> Revisi</button>`;
-  } else if(STATE.role==='qc') {
-    b = `<button onclick="openForm('${id}')" class="text-[10px] font-bold text-white bg-amber-500 px-3 py-2 rounded-lg"><i class="fa-solid fa-pen"></i> Edit</button>`;
-    if(t['Workflow']==='Sample Video') {
-      b += `<button onclick="updWf('${id}','Sample Done')" class="text-[10px] font-bold text-white bg-teal-500 px-3 py-2 rounded-lg"><i class="fa-solid fa-clapperboard"></i> Tandai Sample Selesai</button>`;
-    }
-    if(t['Workflow']==='Approved') {
-      b += `<button onclick="updWf('${id}','Ready')" class="text-[10px] font-bold text-white bg-emerald-500 px-3 py-2 rounded-lg"><i class="fa-solid fa-flag-checkered"></i> Ready</button>`;
-    }
-  } else if(STATE.role==='approved') {
-    if(t['Workflow']==='Sample Done') {
-      b = `<button onclick="openForm('${id}')" class="text-[10px] font-bold text-white bg-amber-500 px-3 py-2 rounded-lg"><i class="fa-solid fa-pen"></i> Edit</button>
-           <button onclick="updWf('${id}','Approved')" class="text-[10px] font-bold text-white bg-blue-500 px-3 py-2 rounded-lg"><i class="fa-solid fa-check"></i> Approve</button>
-           <button onclick="updWf('${id}','Revision')" class="text-[10px] font-bold text-white bg-red-500 px-3 py-2 rounded-lg"><i class="fa-solid fa-rotate-left"></i> Revisi</button>`;
-    } else {
-      b = `<div class="text-[10px] text-slate-400 italic p-2"><i class="fa-solid fa-hourglass-half"></i> Menunggu status "Sample Selesai" dari QC sebelum dapat direview</div>`;
-    }
-  }
-  document.getElementById('modalActions').innerHTML = b;
-  openModal('detailModal');
-}
-
-// (6) Optimistic update: UI langsung update, sinkron ke server di belakang layar (tanpa reload penuh)
-async function updWf(id, w) {
-  const t = STATE.allTasks.find(x=>String(x['Task ID'])===String(id)); if(!t) return;
-  if(!confirm(`Ubah workflow ke "${wfLabel(w)}"?`)) return;
-  closeModal('detailModal');
-  t.Workflow = w; 
-  t['Updated By'] = `by: ${actorLabel()}`; 
-  t['Last Update'] = getWaktu();
-  applyFilter(); persistLocal();
-  showToast('<i class="fa-solid fa-spinner fa-spin"></i>', 'Menyimpan...', 'bg-sky-500');
-  try {
-    await fetch(STATE.apiUrl, {method:'POST', body:JSON.stringify({action:'update',task:t})});
-    showToast('<i class="fa-solid fa-check"></i>', 'Update sukses', 'bg-emerald-600');
-  } catch(e) {
-    showToast('<i class="fa-solid fa-triangle-exclamation"></i>', 'Gagal sinkron ke server', 'bg-orange-500');
-  }
-}
-
-function openAddModal() { openForm(null); }
-function openForm(id) {
-  const t = id ? STATE.allTasks.find(x=>String(x['Task ID'])===String(id)) : null;
-
-  // (7) Approver hanya boleh edit jika status Sample Done
-  if(STATE.role === 'approved' && t && t['Workflow'] !== 'Sample Done') {
-    showToast('<i class="fa-solid fa-lock"></i>', 'Hanya bisa edit saat status Sample Selesai', 'bg-red-500');
-    return;
-  }
-
-  document.getElementById('editModalTitle').innerHTML = t ? '<i class="fa-solid fa-pen"></i> Edit Task' : '<i class="fa-solid fa-plus"></i> Buat Task';
-  document.getElementById('editTaskId').value = id||''; document.getElementById('form_taskId').value = id||''; document.getElementById('form_taskId').disabled = !!id;
-  const k = ['taskName','desc','goal','initStatus','genDir','type','num','label','pull','env','status','wf','video','qr','barang','catatan','clientNote'];
-  const dk = ['Task Name','Description','Task Goal','Initialize Status','Generalization Direction','Task Type','Num','Label','Pullable Num','Environment Type','Status','Workflow','Video URL','QR Code URL','List Barang','Catatan','Client Note'];
-  k.forEach((idK,i) => { document.getElementById('form_'+idK).value = t ? (t[dk[i]]||'') : ''; });
-  if(!t) { document.getElementById('form_status').value = 'Offline'; document.getElementById('form_wf').value = 'Waiting Received'; }
-
-  // (2) Project = pilihan tab/sheet yang sudah ada, atau buat baru
-  populateProjectSelect(t ? t['Project Name'] : (STATE.project||''));
-
-  // (2) Field berikut TIDAK BISA diedit setelah task dibuat (hanya bisa diisi saat pertama kali buat task)
-  const lockedFields = ['taskName','desc','goal','initStatus','genDir','type','num','label','pull','env'];
-  lockedFields.forEach(idK => {
-    const el = document.getElementById('form_'+idK);
-    if(t) { el.readOnly = true; el.disabled = true; el.classList.add('bg-slate-100','text-slate-500','cursor-not-allowed'); }
-    else { el.readOnly = false; el.disabled = false; el.classList.remove('bg-slate-100','text-slate-500','cursor-not-allowed'); }
-  });
-
-  const cn = document.getElementById('form_clientNote'), lk = document.getElementById('form_lockInfo');
-  if(STATE.role === 'approved') { cn.readOnly = false; cn.classList.remove('bg-slate-100'); lk.innerHTML = '<i class="fa-solid fa-pen"></i> Bisa diisi'; } else { cn.readOnly = true; cn.classList.add('bg-slate-100'); lk.innerHTML = '<i class="fa-solid fa-lock"></i> Only Approver'; }
-  
-  if(id) closeModal('detailModal'); openModal('editModal');
-}
-
-// (6) Optimistic save: data lokal diupdate dulu supaya UI instan, baru sinkron ke server
-async function saveTask() {
-  const oldId = document.getElementById('editTaskId').value, nId = document.getElementById('form_taskId').value.trim(); if(!nId) return alert('Task ID wajib!');
-
-  // (2) Project Name diambil dari dropdown; kalau pilih "Buat Project Baru", ambil dari input teks baru
-  let projectVal = v('project');
-  if(projectVal === '__new__') {
-    projectVal = document.getElementById('form_projectNew').value.trim();
-    if(!projectVal) return alert('Nama project baru wajib diisi!');
-  }
-
-  const d = {'Task ID':nId, 'Project Name':projectVal, 'Task Name':v('taskName'), 'Description':v('desc'), 'Task Goal':v('goal'), 'Initialize Status':v('initStatus'), 'Generalization Direction':v('genDir'), 'Task Type':v('type'), 'Num':v('num'), 'Label':v('label'), 'Pullable Num':v('pull'), 'Environment Type':v('env'), 'Status':v('status'), 'Workflow':v('wf'), 'Video URL':v('video'), 'QR Code URL':v('qr'), 'List Barang':v('barang'), 'Catatan':v('catatan'), 'Client Note':v('clientNote')};
-  
-  // SIMPAN NAMA PENGUPDATE
-  d['Updated By'] = `by: ${actorLabel()}`;
-  d['Last Update'] = getWaktu();
-
-  if(!oldId) STATE.allTasks.unshift(d);
-  else { const i=STATE.allTasks.findIndex(x=>String(x['Task ID'])===String(oldId)); if(i>-1) STATE.allTasks[i]=d; }
-
-  // Kalau project baru dibuat, tambahkan ke daftar project lokal supaya langsung muncul di dropdown
-  if(!STATE.projects.includes(projectVal)) { STATE.projects.push(projectVal); setupProjFilter(); }
-
-  persistLocal(); closeModal('editModal'); applyFilter();
-  showToast('<i class="fa-solid fa-spinner fa-spin"></i>', 'Menyimpan...', 'bg-sky-500');
-  try {
-    await fetch(STATE.apiUrl, {method:'POST', body:JSON.stringify({action:oldId?'update':'create', task:d})});
-    showToast('<i class="fa-solid fa-check"></i>', 'Tersimpan!', 'bg-emerald-600');
-  } catch(e) {
-    showToast('<i class="fa-solid fa-triangle-exclamation"></i>', 'Gagal sinkron ke server', 'bg-orange-500');
-  }
-}
-
-// Utils
-function v(id){ return document.getElementById('form_'+id).value.trim(); }
-function getWaktu() {
-  const d = new Date();
-  const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  const tgl = String(d.getDate()).padStart(2,'0');
-  const bln = BULAN[d.getMonth()];
-  const thn = d.getFullYear();
-  const jam = String(d.getHours()).padStart(2,'0');
-  const mnt = String(d.getMinutes()).padStart(2,'0');
-  return `${tgl}/${bln}/${thn} ${jam}:${mnt}`;
-}
-function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
-let _t; function showToast(i,m,c) { const e=document.getElementById('toast'), tc=document.getElementById('toastContent'); tc.className=`flex items-center gap-2 text-white text-[10px] font-bold px-3 py-2 rounded-lg shadow-xl ${c}`; document.getElementById('toastIcon').innerHTML=i; document.getElementById('toastMsg').innerText=m; e.classList.remove('hidden'); clearTimeout(_t); _t=setTimeout(()=>e.classList.add('hidden'),3000); }
-function openQRFullscreen() { const q = document.getElementById('modalQRImg'); if(!q.classList.contains('hidden')) { q.requestFullscreen?q.requestFullscreen():q.webkitRequestFullscreen?q.webkitRequestFullscreen():null; } }
-</script>
 </body>
 </html>

@@ -1,0 +1,73 @@
+<!-- =============================================
+     SIDEBAR COMPONENT
+     ============================================= -->
+<aside class="w-full lg:w-64 bg-slate-900 text-slate-300 border-r border-slate-800 p-5 flex flex-col gap-5 shrink-0">
+  <!-- Section Title -->
+  <div>
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
+      <i class="fa-solid fa-filter text-sky-400"></i> Filter & Pengurutan
+    </h3>
+  </div>
+
+  <!-- Project Filter -->
+  <div class="flex flex-col gap-1.5">
+    <label for="filterProject" class="text-[10px] font-bold uppercase text-slate-400">Project</label>
+    <div class="relative">
+      <select id="filterProject" class="w-full bg-slate-800 text-slate-200 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-sky-500 appearance-none cursor-pointer">
+        <option value="all">Semua Project</option>
+      </select>
+      <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+    </div>
+  </div>
+
+  <!-- Status Filter -->
+  <div class="flex flex-col gap-1.5">
+    <label for="filterStatus" class="text-[10px] font-bold uppercase text-slate-400">Status</label>
+    <div class="relative">
+      <select id="filterStatus" class="w-full bg-slate-800 text-slate-200 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-sky-500 appearance-none cursor-pointer">
+        <option value="all">Semua Status</option>
+        <option value="Online">Online</option>
+        <option value="Offline">Offline</option>
+        <option value="Hold">Hold</option>
+      </select>
+      <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+    </div>
+  </div>
+
+  <!-- Workflow Filter -->
+  <div class="flex flex-col gap-1.5">
+    <label for="filterWorkflow" class="text-[10px] font-bold uppercase text-slate-400">Workflow</label>
+    <div class="relative">
+      <select id="filterWorkflow" class="w-full bg-slate-800 text-slate-200 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-sky-500 appearance-none cursor-pointer">
+        <option value="all">Semua Workflow</option>
+        <option value="Waiting Received">Menunggu Diterima</option>
+        <option value="Received">Diterima</option>
+        <option value="Skip">Skip</option>
+        <option value="Sample Video">Sample Diminta</option>
+        <option value="Sample Done">Sample Selesai</option>
+        <option value="Approved">Disetujui</option>
+        <option value="Revision">Revisi</option>
+        <option value="Ready">Ready</option>
+      </select>
+      <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+    </div>
+  </div>
+
+  <!-- Sorting -->
+  <div class="flex flex-col gap-1.5">
+    <label for="sortSelect" class="text-[10px] font-bold uppercase text-slate-400">Urutkan</label>
+    <div class="relative">
+      <select id="sortSelect" class="w-full bg-slate-800 text-slate-200 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-sky-500 appearance-none cursor-pointer">
+        <option value="update_desc">Terbaru diupdate</option>
+        <option value="id_desc">Task ID (Terbesar)</option>
+        <option value="id_asc">Task ID (Terkecil)</option>
+      </select>
+      <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+    </div>
+  </div>
+
+  <!-- Reset Button -->
+  <button onclick="resetFilter()" class="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-850 border border-slate-700 hover:border-slate-600 hover:text-white transition-all text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 mt-2">
+    <i class="fa-solid fa-rotate-right"></i> Reset Filter
+  </button>
+</aside>

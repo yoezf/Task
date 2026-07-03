@@ -1,0 +1,57 @@
+<!-- =============================================
+     NAVBAR COMPONENT
+     ============================================= -->
+<nav class="nav-blur fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6 shadow-md text-white">
+  <!-- Brand Logo & Title -->
+  <div class="flex items-center gap-2.5 cursor-pointer" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <div class="w-8 h-8 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+      <i class="fa-solid fa-layer-group text-white text-sm"></i>
+    </div>
+    <div>
+      <div class="font-black tracking-tight text-sm leading-none">Task Management</div>
+      <div class="text-[9px] text-sky-400 font-semibold tracking-widest uppercase leading-none mt-0.5">Produksi V2</div>
+    </div>
+  </div>
+
+  <!-- Right Controls -->
+  <div class="flex items-center gap-3 sm:gap-4">
+    <!-- Search Toggle -->
+    <button onclick="toggleSearch()" class="text-slate-300 hover:text-white text-base transition-colors p-1" title="Cari Task">
+      <i class="fa-solid fa-magnifying-glass"></i>
+    </button>
+
+    <!-- CSV Import (Admin only) -->
+    <button id="csvImportBtn" onclick="triggerCsvImport()" class="hidden text-slate-300 hover:text-white text-base transition-colors p-1" title="Import CSV">
+      <i class="fa-solid fa-file-import"></i>
+    </button>
+    <input type="file" id="csvFileInput" accept=".csv" class="hidden" />
+
+    <!-- User Info Badge -->
+    <div id="userInfo" class="hidden text-[10px] font-bold text-sky-300 bg-white/10 px-2.5 py-1 rounded-lg leading-none items-center gap-1.5 flex"></div>
+
+    <!-- Login / Logout Buttons -->
+    <button id="loginBtn" onclick="openModal('loginModal')" class="text-slate-300 hover:text-white text-base transition-colors p-1" title="Login">
+      <i class="fa-solid fa-user-lock"></i>
+    </button>
+    <button id="logoutBtn" onclick="logout()" class="hidden text-red-400 hover:text-red-300 text-base transition-colors p-1" title="Logout">
+      <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
+
+    <!-- Add Task (Admin/QC) -->
+    <button id="addTaskBtn" onclick="openAddModal()" class="hidden w-8 h-8 bg-gradient-to-r from-sky-500 to-blue-600 rounded-full items-center justify-center shadow-lg hover:shadow-sky-500/30 transition-all" title="Buat Task Baru">
+      <i class="fa-solid fa-plus text-white text-sm"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- Search Popover -->
+<div id="searchPopover" class="hidden fixed top-16 left-0 right-0 z-40 bg-slate-800/98 backdrop-blur-md p-3 border-b border-slate-700 shadow-xl">
+  <div class="relative max-w-2xl mx-auto flex items-center">
+    <i class="fa-solid fa-magnifying-glass absolute left-3.5 text-slate-400 text-sm"></i>
+    <input id="searchInput" type="text" placeholder="Cari Task ID, Nama Task, Project..."
+      class="w-full bg-slate-900 text-white border border-slate-600 rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:border-sky-500 transition-colors" />
+    <button id="searchClear" class="hidden absolute right-3 text-slate-400 hover:text-white p-1 transition-colors" onclick="clearSearch()">
+      <i class="fa-solid fa-xmark text-sm"></i>
+    </button>
+  </div>
+</div>

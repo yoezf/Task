@@ -1,0 +1,23 @@
+<!-- =============================================
+     TASK CARD COMPONENT (TEMPLATE REFERENCE)
+     ============================================= -->
+<div class="bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col p-3.5 relative card-hover cursor-pointer shadow-sm" onclick="openDetail('{{Task ID}}')">
+  <!-- Notifications & Badges -->
+  <div class="text-xl font-black text-slate-800 leading-none mb-1">#{{Task ID}}</div>
+  <div class="text-[8px] font-bold text-sky-600 uppercase tracking-wider mb-2 truncate">{{Project Name}}</div>
+  <div class="text-[11px] font-semibold text-slate-600 mb-3 line-clamp-2 leading-snug">{{Task Name}}</div>
+  
+  <div class="flex gap-1 mb-2 mt-auto flex-wrap">
+    <span class="text-[9px] font-bold px-2 py-0.5 rounded-md border {{Status Color}}">
+      <i class="fa-solid {{Status Icon}}"></i> {{Status}}
+    </span>
+    <span class="text-[9px] font-bold px-2 py-0.5 rounded-md border {{Workflow Color}}">
+      {{Workflow}}
+    </span>
+  </div>
+  
+  <div class="text-[8px] text-slate-400 mt-1 border-t border-slate-100 pt-2 flex justify-between items-center">
+    <span>{{Last Update Date}}</span>
+    <span class="truncate max-w-[100px] font-semibold"><i class="fa-solid fa-user-pen"></i> {{Updated By}}</span>
+  </div>
+</div>
