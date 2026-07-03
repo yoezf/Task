@@ -2,405 +2,461 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Task Monitoring Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Task Management Produksi</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/906/906324.png" type="image/png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    * { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+    .nav-blur { background:rgba(15,23,42,.95); backdrop-filter:blur(16px); }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,.08); }
+    .modal-overlay { animation: fadeIn .15s ease; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .modal-box { animation: slideUp .2s ease; }
+    @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    ::-webkit-scrollbar { display: none; } /* Hide scrollbar for cleaner mobile look */
+    .skeleton { animation: pulse 1.5s infinite; background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 200% 100%; }
+    @keyframes pulse { 0%,100%{background-position:200% 0} 50%{background-position:-200% 0} }
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  </style>
 </head>
+<body class="bg-slate-50 min-h-screen pb-24">
 
-<body class="bg-slate-100 text-slate-800">
+<nav class="nav-blur fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6 shadow-md text-white">
+  <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+    <i class="fa-solid fa-layer-group text-sky-400 text-xl"></i>
+    <span class="font-bold tracking-tight text-sm sm:text-base">Dashboard <span class="hidden sm:inline">Produksi</span></span>
+  </div>
+  
+  <div class="flex items-center gap-5">
+    <button onclick="toggleSearch()" class="text-slate-300 hover:text-white text-lg transition"><i class="fa-solid fa-magnifying-glass"></i></button>
+    
+    <div class="flex items-center gap-3">
+      <div id="userInfo" class="hidden text-xs font-semibold text-sky-300 bg-white/10 px-2 py-1 rounded-md"></div>
+      <button id="loginBtn" onclick="openModal('loginModal')" class="text-slate-300 hover:text-white text-xl transition"><i class="fa-solid fa-lock"></i></button>
+      <button id="logoutBtn" onclick="logout()" class="hidden text-red-400 hover:text-red-300 text-xl transition"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </div>
+    
+    <button id="addTaskBtn" onclick="openAddModal()" class="hidden w-8 h-8 bg-gradient-to-r from-sky-500 to-blue-600 rounded-full items-center justify-center shadow-lg"><i class="fa-solid fa-plus text-sm"></i></button>
+  </div>
+</nav>
 
-  <!-- Header -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div id="searchPopover" class="hidden fixed top-16 left-0 right-0 z-40 bg-slate-800 p-3 border-b border-slate-700 shadow-xl transition-all">
+  <div class="relative max-w-screen-2xl mx-auto flex items-center">
+    <i class="fa-solid fa-magnifying-glass absolute left-3 text-slate-400"></i>
+    <input id="searchInput" type="text" placeholder="Cari Task ID, Nama, Project..." class="w-full bg-slate-900 text-white border border-slate-600 rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:border-sky-500 transition" />
+    <i id="searchClear" class="fa-solid fa-xmark hidden absolute right-3 text-slate-400 p-1 cursor-pointer" onclick="clearSearch()"></i>
+  </div>
+</div>
+
+<main class="max-w-[1600px] mx-auto px-4 sm:px-6 pt-20">
+
+  <details class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden group mb-4">
+    <summary class="p-3.5 text-xs font-bold text-slate-600 cursor-pointer flex justify-between items-center bg-slate-50 hover:bg-slate-100 transition">
+      <div class="flex items-center gap-2"><i class="fa-solid fa-filter text-sky-500"></i> Filter & Pengurutan</div>
+      <i class="fa-solid fa-chevron-down text-slate-400 group-open:rotate-180 transition-transform duration-300"></i>
+    </summary>
+    <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-3 border-t border-slate-100">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900">Task Monitoring Dashboard</h1>
-        <p class="text-sm text-slate-500">Pantau task, status, kebutuhan alat, dan video sample Lightwheel.</p>
+        <label class="text-[10px] font-bold text-slate-400 uppercase">Project</label>
+        <select id="filterProject" class="w-full text-xs border rounded-lg px-2 py-2 mt-1 focus:ring-1 focus:ring-sky-400 outline-none"><option value="all">Semua Project</option></select>
       </div>
-
-      <button onclick="loadTasks()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium">
-        Refresh Data
-      </button>
-    </div>
-  </header>
-
-  <main class="max-w-7xl mx-auto px-4 py-6">
-
-    <!-- Statistik -->
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white rounded-2xl p-4 shadow-sm border">
-        <p class="text-sm text-slate-500">Total Task</p>
-        <h2 id="totalTask" class="text-3xl font-bold mt-1">0</h2>
+      <div>
+        <label class="text-[10px] font-bold text-slate-400 uppercase">Status</label>
+        <select id="filterStatus" class="w-full text-xs border rounded-lg px-2 py-2 mt-1 focus:ring-1 focus:ring-sky-400 outline-none"><option value="all">Semua Status</option><option value="Online">Online</option><option value="Offline">Offline</option><option value="Hold">Hold</option></select>
       </div>
-
-      <div class="bg-white rounded-2xl p-4 shadow-sm border">
-        <p class="text-sm text-slate-500">Online</p>
-        <h2 id="onlineTask" class="text-3xl font-bold mt-1 text-green-600">0</h2>
+      <div>
+        <label class="text-[10px] font-bold text-slate-400 uppercase">Workflow</label>
+        <select id="filterWorkflow" class="w-full text-xs border rounded-lg px-2 py-2 mt-1 focus:ring-1 focus:ring-sky-400 outline-none"><option value="all">Semua Workflow</option><option value="Waiting Received">Waiting Received</option><option value="Received">Received</option><option value="Skip">Skip</option><option value="Sample Video">Sample Video</option><option value="Approved">Approved</option><option value="Revision">Revision</option><option value="Ready">Ready</option></select>
       </div>
-
-      <div class="bg-white rounded-2xl p-4 shadow-sm border">
-        <p class="text-sm text-slate-500">Offline</p>
-        <h2 id="offlineTask" class="text-3xl font-bold mt-1 text-slate-500">0</h2>
-      </div>
-
-      <div class="bg-white rounded-2xl p-4 shadow-sm border">
-        <p class="text-sm text-slate-500">Dengan Video</p>
-        <h2 id="videoTask" class="text-3xl font-bold mt-1 text-blue-600">0</h2>
-      </div>
-    </section>
-
-    <!-- Filter -->
-    <section class="bg-white rounded-2xl p-4 shadow-sm border mb-6">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <input
-          id="searchInput"
-          type="text"
-          placeholder="Cari Task ID / Task Name..."
-          class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-          oninput="renderTasks()"
-        />
-
-        <select
-          id="statusFilter"
-          class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-          onchange="renderTasks()"
-        >
-          <option value="">Semua Status</option>
-          <option value="Online">Online</option>
-          <option value="Offline">Offline</option>
-          <option value="Unknown">Unknown</option>
-        </select>
-
-        <select
-          id="videoFilter"
-          class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-          onchange="renderTasks()"
-        >
-          <option value="">Semua Video</option>
-          <option value="with">Dengan Video</option>
-          <option value="without">Tanpa Video</option>
-        </select>
-      </div>
-    </section>
-
-    <!-- Loading -->
-    <div id="loading" class="text-center py-10 text-slate-500">
-      Memuat data task...
-    </div>
-
-    <!-- Card Container -->
-    <section id="taskGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></section>
-
-  </main>
-
-  <!-- Modal Detail Task -->
-  <div id="taskModal" class="fixed inset-0 bg-black/60 hidden z-50 items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-
-      <div class="flex items-center justify-between p-5 border-b">
-        <div>
-          <h2 class="text-xl font-bold text-slate-900">Detail Task</h2>
-          <p class="text-sm text-slate-500">Video sample dan informasi lengkap task</p>
-        </div>
-
-        <button onclick="closeModal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xl">
-          ×
-        </button>
-      </div>
-
-      <div class="p-5">
-
-        <!-- Video -->
-        <div class="bg-black rounded-2xl overflow-hidden mb-5">
-          <video
-            id="modalVideo"
-            class="w-full max-h-[420px]"
-            controls
-            autoplay
-          ></video>
-        </div>
-
-        <!-- Detail -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-          <div class="bg-slate-50 rounded-2xl p-4">
-            <p class="text-xs text-slate-500 mb-1">Task ID</p>
-            <h3 id="modalTaskId" class="font-bold text-slate-900"></h3>
-          </div>
-
-          <div class="bg-slate-50 rounded-2xl p-4">
-            <p class="text-xs text-slate-500 mb-1">Status</p>
-            <span id="modalStatus" class="inline-flex px-3 py-1 rounded-full text-sm font-medium"></span>
-          </div>
-        </div>
-
-        <div class="mb-5">
-          <p class="text-xs text-slate-500 mb-1">Task Name</p>
-          <h3 id="modalTaskName" class="text-2xl font-bold text-slate-900"></h3>
-        </div>
-
-        <div class="mb-5">
-          <p class="text-xs text-slate-500 mb-1">Deskripsi</p>
-          <p id="modalDescription" class="text-slate-700 leading-relaxed"></p>
-        </div>
-
-        <div class="mb-5">
-          <p class="text-xs text-slate-500 mb-2">Alat / Barang yang Dibutuhkan</p>
-          <ul id="modalItems" class="space-y-2"></ul>
-        </div>
-
-        <div class="mb-2">
-          <p class="text-xs text-slate-500 mb-1">Task Goal</p>
-          <p id="modalGoal" class="text-slate-700 leading-relaxed"></p>
-        </div>
-
+      <div>
+        <label class="text-[10px] font-bold text-slate-400 uppercase">Urutkan</label>
+        <select id="sortSelect" class="w-full text-xs border rounded-lg px-2 py-2 mt-1 focus:ring-1 focus:ring-sky-400 outline-none"><option value="update_desc">Terbaru diupdate</option><option value="id_desc">Task ID (Terbesar)</option><option value="id_asc">Task ID (Terkecil)</option></select>
       </div>
     </div>
+  </details>
+
+  <div id="loadingGrid" class="hidden grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"></div>
+  <div id="emptyState" class="hidden flex-col items-center justify-center py-20 text-center">
+    <div class="text-slate-300 text-6xl mb-3"><i class="fa-solid fa-inbox"></i></div>
+    <div class="text-slate-600 font-bold text-base">Data tidak ditemukan</div>
   </div>
 
-  <script>
-    const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnR7Cq9sVzlc9oC0kkX0kJM78dwQD00KjYPFl0_pl3UODV2VacE9w6TCkanKtOtbkZt0uhd7y5LXIKT16eLi11V6Tj8h5e9KGuH3J41LFoDOEq8ZpoAAY817ieTO3-P7_3uiuzZnMg087Q32Z72tIUI9jpcUGF60Aeo5Ls0i8moFUmtH8S5XCfn9D_HxIdbGm9wIZ5rRwrGDH41-Q3Jj5hY87HjUdYkxFOkjhrCpIt1gjxkTpQK2wRBdR6-D0ZKufZ81JruZZtvf4ATXyInnNT8PAsuC9w&lib=MYCKRTqVWRxbOGuMR3Kuf9GjuLd7lMFYi";
+  <div id="taskGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"></div>
+  
+  <div class="flex items-center justify-center mt-6 gap-3 mb-10">
+    <button id="prevPage" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 disabled:opacity-40 shadow-sm"><i class="fa-solid fa-chevron-left"></i></button>
+    <div id="pageInfo" class="text-xs font-bold text-slate-500">1 / 1</div>
+    <button id="nextPage" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 disabled:opacity-40 shadow-sm"><i class="fa-solid fa-chevron-right"></i></button>
+  </div>
+</main>
 
-    let allTasks = [];
+<div class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] pb-safe">
+  <div class="max-w-md mx-auto flex justify-between p-3 px-6">
+    <div class="text-center"><div class="text-lg font-black text-slate-800 leading-none" id="statTotal">0</div><div class="text-[9px] font-bold text-slate-400 uppercase mt-1">Total</div></div>
+    <div class="text-center"><div class="text-lg font-black text-emerald-500 leading-none" id="statOnline">0</div><div class="text-[9px] font-bold text-emerald-400 uppercase mt-1">Online</div></div>
+    <div class="text-center"><div class="text-lg font-black text-amber-500 leading-none" id="statHold">0</div><div class="text-[9px] font-bold text-amber-400 uppercase mt-1">Hold</div></div>
+    <div class="text-center"><div class="text-lg font-black text-sky-600 leading-none" id="statReady">0</div><div class="text-[9px] font-bold text-sky-400 uppercase mt-1">Ready</div></div>
+  </div>
+</div>
 
-    async function loadTasks() {
-      const loading = document.getElementById("loading");
-      const grid = document.getElementById("taskGrid");
+<div id="detailModal" class="modal-overlay fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
+  <div class="modal-box bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+    <div class="p-4 sm:p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-start">
+      <div>
+        <h2 id="modalTaskId" class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight leading-none"></h2>
+        <div id="modalProjectName" class="text-[10px] sm:text-xs font-bold text-sky-600 uppercase tracking-widest mt-1.5"><i class="fa-solid fa-folder"></i> <span></span></div>
+      </div>
+      <button onclick="closeModal('detailModal')" class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+    </div>
 
-      loading.classList.remove("hidden");
-      grid.innerHTML = "";
+    <div class="overflow-y-auto p-4 sm:p-6 flex-1 space-y-5">
+      <div id="modalUpdatedBy" class="text-[10px] bg-slate-100 text-slate-500 p-2 rounded-lg flex items-center gap-2 font-medium"></div>
 
-      try {
-        const response = await fetch(API_URL);
-        const result = await response.json();
+      <div class="flex gap-2" id="modalBadges"></div>
+      
+      <div id="modalVideoThumb" class="w-full aspect-video bg-black rounded-2xl overflow-hidden flex items-center justify-center relative"></div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-purple-50 p-4 rounded-2xl border border-purple-100">
+          <div class="text-[10px] font-bold text-purple-800 uppercase mb-1"><i class="fa-solid fa-user-tie"></i> Client Note</div>
+          <p id="modalClientNote" class="text-xs text-slate-700 font-medium"></p>
+        </div>
+        <div class="bg-sky-50 p-4 rounded-2xl border border-sky-100">
+          <div class="text-[10px] font-bold text-sky-800 uppercase mb-1"><i class="fa-solid fa-clipboard"></i> Catatan Internal</div>
+          <p id="modalCatatan" class="text-xs text-slate-700 font-medium"></p>
+        </div>
+      </div>
 
-        if (!result.success) {
-          throw new Error(result.message || "Gagal mengambil data");
-        }
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="md:col-span-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+          <h3 class="font-bold text-xs text-slate-700 mb-3"><i class="fa-solid fa-server"></i> Spesifikasi</h3>
+          <div id="metaGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+        </div>
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col items-center justify-center cursor-pointer" onclick="openQRFullscreen()">
+          <h3 class="font-bold text-[10px] text-slate-500 uppercase w-full text-left mb-2"><i class="fa-solid fa-qrcode"></i> QR</h3>
+          <img id="modalQRImg" class="w-full aspect-square object-contain mix-blend-multiply hidden" />
+          <div id="modalQREmpty" class="text-slate-400 text-xs text-center my-4"><i class="fa-solid fa-image text-xl mb-1"></i><br>Kosong</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="p-3 bg-white border-t border-slate-100 flex flex-wrap justify-end gap-2" id="modalActions"></div>
+  </div>
+</div>
 
-        allTasks = result.data || [];
-        updateStats();
-        renderTasks();
-
-      } catch (error) {
-        console.error(error);
-        grid.innerHTML = `
-          <div class="col-span-full bg-red-50 border border-red-200 text-red-700 rounded-2xl p-5">
-            Gagal memuat data. Cek kembali URL Apps Script dan akses deployment.
-          </div>
-        `;
-      } finally {
-        loading.classList.add("hidden");
-      }
-    }
-
-    function updateStats() {
-      const total = allTasks.length;
-      const online = allTasks.filter(t => getStatus(t) === "Online").length;
-      const offline = allTasks.filter(t => getStatus(t) === "Offline").length;
-      const withVideo = allTasks.filter(t => cleanVideoUrl(t.video_url)).length;
-
-      document.getElementById("totalTask").textContent = total;
-      document.getElementById("onlineTask").textContent = online;
-      document.getElementById("offlineTask").textContent = offline;
-      document.getElementById("videoTask").textContent = withVideo;
-    }
-
-    function renderTasks() {
-      const grid = document.getElementById("taskGrid");
-      const search = document.getElementById("searchInput").value.toLowerCase();
-      const statusFilter = document.getElementById("statusFilter").value;
-      const videoFilter = document.getElementById("videoFilter").value;
-
-      let filtered = allTasks.filter(task => {
-        const taskId = String(task.task_id || "").toLowerCase();
-        const taskName = String(task.task_name || "").toLowerCase();
-        const description = String(task.description || "").toLowerCase();
-        const status = getStatus(task);
-        const hasVideo = Boolean(cleanVideoUrl(task.video_url));
-
-        const matchSearch =
-          taskId.includes(search) ||
-          taskName.includes(search) ||
-          description.includes(search);
-
-        const matchStatus = !statusFilter || status === statusFilter;
-
-        const matchVideo =
-          !videoFilter ||
-          (videoFilter === "with" && hasVideo) ||
-          (videoFilter === "without" && !hasVideo);
-
-        return matchSearch && matchStatus && matchVideo;
-      });
-
-      if (filtered.length === 0) {
-        grid.innerHTML = `
-          <div class="col-span-full bg-white border rounded-2xl p-8 text-center text-slate-500">
-            Tidak ada task yang cocok.
-          </div>
-        `;
-        return;
-      }
-
-      grid.innerHTML = filtered.map((task, index) => {
-        const status = getStatus(task);
-        const statusClass = getStatusClass(status);
-        const videoUrl = cleanVideoUrl(task.video_url);
-        const desc = task.description || "-";
-
-        return `
-          <article class="bg-white rounded-3xl p-5 shadow-sm border hover:shadow-lg transition">
-            <div class="flex items-start justify-between gap-3 mb-4">
-              <div>
-                <p class="text-xs text-slate-500">Task ID</p>
-                <h3 class="text-lg font-bold text-blue-600">${escapeHtml(task.task_id || "-")}</h3>
-              </div>
-
-              <span class="${statusClass}">
-                ${status}
-              </span>
+<div id="editModal" class="modal-overlay fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
+  <div class="modal-box bg-white rounded-3xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden">
+    <div class="p-4 sm:p-5 border-b bg-slate-50 flex justify-between items-center">
+      <h2 id="editModalTitle" class="text-lg font-bold text-slate-800"></h2>
+      <button onclick="closeModal('editModal')" class="w-8 h-8 rounded-full bg-slate-200 text-slate-500"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    
+    <div class="overflow-y-auto p-4 sm:p-6 flex-1 bg-white">
+      <input type="hidden" id="editTaskId" />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="space-y-3">
+          <div class="bg-sky-50 p-3 rounded-xl border border-sky-100 space-y-2">
+            <h4 class="font-bold text-[10px] text-sky-800 uppercase"><i class="fa-solid fa-id-card"></i> Identitas Utama</h4>
+            <div class="flex gap-2">
+              <div class="w-1/3"><label class="text-[9px] font-bold text-slate-500 uppercase">Task ID</label><input id="form_taskId" class="w-full text-xs border rounded-lg px-2 py-2 focus:outline-sky-300" /></div>
+              <div class="w-2/3"><label class="text-[9px] font-bold text-slate-500 uppercase">Project Name</label><input id="form_project" class="w-full text-xs border rounded-lg px-2 py-2 focus:outline-sky-300" /></div>
             </div>
+            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Judul / Task Name</label><input id="form_taskName" class="w-full text-xs border rounded-lg px-2 py-2 focus:outline-sky-300" /></div>
+            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Deskripsi</label><textarea id="form_desc" rows="2" class="w-full text-xs border rounded-lg px-2 py-2 focus:outline-sky-300"></textarea></div>
+          </div>
+          
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 grid grid-cols-2 gap-2">
+            <h4 class="font-bold text-[10px] text-slate-700 uppercase col-span-2"><i class="fa-solid fa-sliders"></i> Specs</h4>
+            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Task Goal</label><input id="form_goal" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
+            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Init Status</label><input id="form_initStatus" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
+            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Gen Direction</label><input id="form_genDir" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
+            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Task Type</label><input id="form_type" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
+            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Num</label><input id="form_num" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
+            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Label</label><input id="form_label" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
+            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Pullable</label><input id="form_pull" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
+            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Env Type</label><input id="form_env" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
+          </div>
+        </div>
 
-            <h2 class="text-lg font-bold text-slate-900 mb-2 line-clamp-2">
-              ${escapeHtml(task.task_name || "-")}
-            </h2>
+        <div class="space-y-3">
+          <div class="bg-amber-50 p-3 rounded-xl border border-amber-100 space-y-2">
+            <h4 class="font-bold text-[10px] text-amber-800 uppercase"><i class="fa-solid fa-satellite-dish"></i> Status & Link</h4>
+            <div class="flex gap-2">
+              <div class="w-1/2"><label class="text-[9px] font-bold text-slate-500 uppercase">Status</label><select id="form_status" class="w-full text-xs bg-white border rounded-lg p-1.5"><option>Online</option><option>Offline</option><option>Hold</option></select></div>
+              <div class="w-1/2"><label class="text-[9px] font-bold text-slate-500 uppercase">Workflow</label><select id="form_wf" class="w-full text-xs bg-white border rounded-lg p-1.5"><option>Waiting Received</option><option>Received</option><option>Skip</option><option>Sample Video</option><option>Approved</option><option>Revision</option><option>Ready</option></select></div>
+            </div>
+            <div><label class="text-[9px] font-bold text-slate-500 uppercase">Video URL</label><input id="form_video" type="url" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
+            <div><label class="text-[9px] font-bold text-slate-500 uppercase">QR Image URL</label><input id="form_qr" type="url" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
+            <div><label class="text-[9px] font-bold text-slate-500 uppercase">List Barang</label><input id="form_barang" class="w-full text-xs border rounded-lg p-1.5 focus:outline-sky-300"/></div>
+          </div>
+          
+          <div><label class="text-[9px] font-bold text-slate-500 uppercase">Catatan Internal</label><textarea id="form_catatan" rows="2" class="w-full text-xs border rounded-lg p-2 focus:outline-sky-300"></textarea></div>
+          <div class="relative bg-purple-50 p-3 rounded-xl border border-purple-100">
+             <label class="text-[9px] font-bold text-purple-800 uppercase flex justify-between">Client Note <span id="form_lockInfo" class="text-purple-500"><i class="fa-solid fa-lock"></i> Only Approver</span></label>
+             <textarea id="form_clientNote" rows="2" class="w-full text-xs border rounded-lg p-2 mt-1 focus:outline-purple-300"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="p-3 bg-slate-50 border-t flex justify-end gap-2">
+      <button onclick="closeModal('editModal')" class="px-4 py-2 text-xs font-bold text-slate-600 bg-white border rounded-lg">Batal</button>
+      <button onclick="saveTask()" class="px-4 py-2 text-xs font-bold text-white bg-sky-500 rounded-lg shadow-md"><i class="fa-solid fa-floppy-disk"></i> Simpan Data</button>
+    </div>
+  </div>
+</div>
 
-            <p class="text-sm text-slate-600 leading-relaxed mb-5 line-clamp-3">
-              ${escapeHtml(desc)}
-            </p>
+<div id="loginModal" class="modal-overlay fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+  <div class="modal-box bg-white rounded-3xl w-full max-w-xs p-6 text-center shadow-2xl relative overflow-hidden">
+    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-400 to-blue-600"></div>
+    <div class="w-12 h-12 bg-sky-50 text-sky-500 rounded-full flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-user-lock"></i></div>
+    <h2 class="text-lg font-black text-slate-800 mb-4">Login Akses</h2>
+    <div class="space-y-3 text-left">
+      <input id="loginUsername" type="text" placeholder="Username" class="w-full border-b-2 border-slate-200 bg-slate-50 rounded-t-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-400 transition" />
+      <input id="loginPassword" type="password" placeholder="Password" class="w-full border-b-2 border-slate-200 bg-slate-50 rounded-t-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-400 transition" />
+      <button onclick="processLogin()" class="w-full bg-slate-800 text-white font-bold py-2.5 rounded-xl text-sm mt-2 hover:bg-slate-700 transition">Masuk</button>
+      <button onclick="closeModal('loginModal')" class="w-full text-slate-400 text-xs font-bold mt-2 hover:text-slate-600">Batal</button>
+    </div>
+  </div>
+</div>
 
-            <button
-              onclick="openModal(${index})"
-              class="w-full py-3 rounded-xl font-medium ${
-                videoUrl
-                  ? "bg-blue-600 hover:bg-blue-700 text-white"
-                  : "bg-slate-200 text-slate-500 cursor-not-allowed"
-              }"
-              ${videoUrl ? "" : "disabled"}
-            >
-              ${videoUrl ? "Play Video" : "Video Tidak Ada"}
-            </button>
-          </article>
-        `;
-      }).join("");
-    }
+<div id="toast" class="fixed top-20 right-4 z-[99] hidden">
+  <div id="toastContent" class="flex items-center gap-2 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl">
+    <span id="toastIcon" class="text-base"></span>
+    <span id="toastMsg"></span>
+  </div>
+</div>
 
-    function openModal(index) {
-      const search = document.getElementById("searchInput").value.toLowerCase();
-      const statusFilter = document.getElementById("statusFilter").value;
-      const videoFilter = document.getElementById("videoFilter").value;
+<script>
+// ================= STATE & CONFIG =================
+let STATE = {
+  apiUrl: 'https://script.google.com/macros/s/AKfycbwx-zF5v4ypteAPKbYcR-QuHWGZceX9xZlBykhysMwgdNHHb39qucU0s5xtFLDFrnBh/exec', // <-- GANTI DENGAN URL WEB APP BARU ANDA
+  allTasks: [], filteredTasks: [],
+  role: 'public', userName: 'Guest',
+  search: '', project: '', status: '', workflow: '', sort: 'update_desc',
+  page: 1, perPage: 30 // GRID 5x6 = 30 Items
+};
 
-      const filtered = allTasks.filter(task => {
-        const taskId = String(task.task_id || "").toLowerCase();
-        const taskName = String(task.task_name || "").toLowerCase();
-        const description = String(task.description || "").toLowerCase();
-        const status = getStatus(task);
-        const hasVideo = Boolean(cleanVideoUrl(task.video_url));
+const USERS = {
+  'qc1': { password: '123', role: 'qc', name: 'QC Satu' },
+  'app1': { password: '123', role: 'approved', name: 'Approver' },
+  'leader1': { password: '123', role: 'leader', name: 'Leader' }
+};
 
-        const matchSearch = taskId.includes(search) || taskName.includes(search) || description.includes(search);
-        const matchStatus = !statusFilter || status === statusFilter;
-        const matchVideo = !videoFilter || (videoFilter === "with" && hasVideo) || (videoFilter === "without" && !hasVideo);
+const UI_COLORS = {
+  'Online':{c:'bg-emerald-100 text-emerald-700 border-emerald-200', i:'fa-wifi'}, 'Offline':{c:'bg-slate-100 text-slate-600 border-slate-200', i:'fa-power-off'}, 'Hold':{c:'bg-amber-100 text-amber-700 border-amber-200', i:'fa-pause'},
+  'Waiting Received':{c:'bg-slate-100 text-slate-600 border-slate-200'}, 'Received':{c:'bg-blue-100 text-blue-700 border-blue-200'}, 'Ready':{c:'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'},
+  'Sample Video':{c:'bg-purple-100 text-purple-700 border-purple-200'}, 'Approved':{c:'bg-green-100 text-green-700 border-green-200'}, 'Revision':{c:'bg-red-100 text-red-700 border-red-200'}
+};
 
-        return matchSearch && matchStatus && matchVideo;
-      });
+// ================= INIT & LISTENERS =================
+window.onload = () => {
+  // Setup enter to login
+  document.getElementById('loginPassword').addEventListener('keypress', e => { if (e.key === 'Enter') processLogin(); });
+  
+  // Search
+  const sInput = document.getElementById('searchInput');
+  sInput.addEventListener('input', e => { STATE.search = e.target.value.toLowerCase(); document.getElementById('searchClear').classList.toggle('hidden', !STATE.search); STATE.page=1; applyFilter(); });
+  
+  // Filter Triggers
+  ['filterProject','filterStatus','filterWorkflow','sortSelect'].forEach(id => {
+    document.getElementById(id).addEventListener('change', e => { STATE[id.replace('filter','').toLowerCase()] = e.target.value === 'all' ? '' : e.target.value; STATE.page=1; applyFilter(); });
+  });
 
-      const task = filtered[index];
-      if (!task) return;
+  document.getElementById('prevPage').addEventListener('click', () => { if(STATE.page>1){ STATE.page--; renderGrid(); } });
+  document.getElementById('nextPage').addEventListener('click', () => { if(STATE.page < Math.ceil(STATE.filteredTasks.length/STATE.perPage)){ STATE.page++; renderGrid(); } });
 
-      const status = getStatus(task);
-      const videoUrl = cleanVideoUrl(task.video_url);
+  updateRoleUI();
+  loadData();
+};
 
-      document.getElementById("modalTaskId").textContent = task.task_id || "-";
-      document.getElementById("modalTaskName").textContent = task.task_name || "-";
-      document.getElementById("modalDescription").textContent = task.description || "-";
-      document.getElementById("modalGoal").textContent = task.task_goal || "-";
+function toggleSearch() { 
+  const el = document.getElementById('searchPopover');
+  el.classList.toggle('hidden'); 
+  if(!el.classList.contains('hidden')) document.getElementById('searchInput').focus();
+}
+function clearSearch() { document.getElementById('searchInput').value=''; STATE.search=''; document.getElementById('searchClear').classList.add('hidden'); applyFilter(); }
 
-      const modalStatus = document.getElementById("modalStatus");
-      modalStatus.textContent = status;
-      modalStatus.className = getStatusClass(status);
+// ================= LOGIN =================
+function processLogin() {
+  const u = document.getElementById('loginUsername').value.trim(), p = document.getElementById('loginPassword').value;
+  if(USERS[u] && USERS[u].password === p) {
+    STATE.role = USERS[u].role; STATE.userName = USERS[u].name;
+    document.getElementById('loginBtn').classList.add('hidden');
+    document.getElementById('logoutBtn').classList.remove('hidden');
+    document.getElementById('userInfo').innerHTML = `<i class="fa-solid fa-user-check"></i> ${USERS[u].name}`;
+    document.getElementById('userInfo').classList.remove('hidden');
+    showToast('<i class="fa-solid fa-check"></i>', `Halo, ${USERS[u].name}`, 'bg-emerald-600');
+    closeModal('loginModal'); updateRoleUI(); renderGrid();
+  } else showToast('<i class="fa-solid fa-xmark"></i>', 'Gagal login!', 'bg-red-500');
+}
+function logout() {
+  STATE.role = 'public'; STATE.userName = 'Guest';
+  document.getElementById('loginBtn').classList.remove('hidden');
+  document.getElementById('logoutBtn').classList.add('hidden');
+  document.getElementById('userInfo').classList.add('hidden');
+  updateRoleUI(); renderGrid();
+}
+function updateRoleUI() {
+  const btn = document.getElementById('addTaskBtn');
+  if(STATE.role === 'qc' || STATE.role === 'approved') { btn.classList.remove('hidden'); btn.classList.add('flex'); } else { btn.classList.add('hidden'); btn.classList.remove('flex'); }
+}
 
-      const itemsContainer = document.getElementById("modalItems");
-      const items = String(task.required_items || "")
-        .split(",")
-        .map(item => item.trim())
-        .filter(Boolean);
+// ================= DATA =================
+async function loadData() {
+  showLoading(true);
+  try {
+    const res = await fetch(STATE.apiUrl);
+    const j = await res.json();
+    if(!j.success) throw 1;
+    STATE.allTasks = j.data;
+    setupProjFilter(); applyFilter();
+  } catch(e) {
+    const l = localStorage.getItem('localT'); if(l) STATE.allTasks = JSON.parse(l);
+    showToast('<i class="fa-solid fa-triangle-exclamation"></i>', 'Offline', 'bg-orange-500'); applyFilter();
+  }
+}
+function setupProjFilter() {
+  const sel = document.getElementById('filterProject');
+  const projs = [...new Set(STATE.allTasks.map(t=>t['Project Name']).filter(Boolean))];
+  sel.innerHTML = '<option value="all">Semua Project</option>' + projs.map(p=>`<option value="${p}">${p}</option>`).join('');
+}
+function applyFilter() {
+  let ts = [...STATE.allTasks];
+  if(STATE.search) ts = ts.filter(t => (t['Task ID']||'').toLowerCase().includes(STATE.search) || (t['Nama Task']||'').toLowerCase().includes(STATE.search));
+  if(STATE.project) ts = ts.filter(t => t['Project Name'] === STATE.project);
+  if(STATE.status) ts = ts.filter(t => t['Status'] === STATE.status);
+  if(STATE.workflow) ts = ts.filter(t => t['Workflow'] === STATE.workflow);
+  
+  ts.sort((a,b) => {
+    if(STATE.sort === 'id_desc') return (parseInt(b['Task ID'])||0) - (parseInt(a['Task ID'])||0);
+    if(STATE.sort === 'id_asc') return (parseInt(a['Task ID'])||0) - (parseInt(b['Task ID'])||0);
+    return (b['Last Update']||'').localeCompare(a['Last Update']||''); // Sort string time
+  });
+  STATE.filteredTasks = ts;
+  
+  document.getElementById('statTotal').innerText = ts.length;
+  document.getElementById('statOnline').innerText = ts.filter(t=>t['Status']==='Online').length;
+  document.getElementById('statHold').innerText = ts.filter(t=>t['Status']==='Hold').length;
+  document.getElementById('statReady').innerText = ts.filter(t=>t['Workflow']==='Ready').length;
+  renderGrid();
+}
 
-      if (items.length === 0) {
-        itemsContainer.innerHTML = `<li class="text-slate-500">Belum ada data alat/barang.</li>`;
-      } else {
-        itemsContainer.innerHTML = items.map(item => `
-          <li class="flex items-start gap-2 bg-slate-50 rounded-xl px-4 py-3">
-            <span class="text-blue-600 mt-0.5">•</span>
-            <span>${escapeHtml(item)}</span>
-          </li>
-        `).join("");
-      }
+// ================= UI RENDER =================
+function showLoading(show) {
+  const g = document.getElementById('taskGrid'), s = document.getElementById('loadingGrid');
+  if(show) { g.classList.add('hidden'); s.classList.remove('hidden'); s.innerHTML = Array(10).fill(`<div class="bg-white rounded-xl p-3 border shadow-sm"><div class="skeleton h-4 w-1/3 rounded mb-2"></div><div class="skeleton h-3 w-1/2 rounded mb-3"></div><div class="skeleton h-6 w-full rounded"></div></div>`).join(''); } 
+  else { g.classList.remove('hidden'); s.classList.add('hidden'); }
+}
+function renderGrid() {
+  showLoading(false);
+  const total = STATE.filteredTasks.length, empty = document.getElementById('emptyState');
+  if(total === 0) { document.getElementById('taskGrid').innerHTML=''; empty.classList.remove('hidden'); empty.classList.add('flex'); return; }
+  empty.classList.add('hidden'); empty.classList.remove('flex');
 
-      const video = document.getElementById("modalVideo");
-      video.src = videoUrl;
-      video.load();
-      video.play().catch(() => {});
+  const start = (STATE.page - 1) * STATE.perPage, paged = STATE.filteredTasks.slice(start, start + STATE.perPage);
+  let h = '';
+  paged.forEach(t => {
+    const isLock = STATE.role === 'public' && t['Workflow'] !== 'Ready';
+    const c1 = UI_COLORS[t['Status']] || UI_COLORS['Offline'], c2 = UI_COLORS[t['Workflow']] || UI_COLORS['Waiting Received'];
+    h += `<div class="bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col p-3.5 relative ${isLock ? 'opacity-60 bg-slate-50' : 'card-hover cursor-pointer shadow-sm'}" ${isLock?'':`onclick="openDetail('${t['Task ID']}')"`}>
+      ${isLock?'<i class="fa-solid fa-lock absolute top-3 right-3 text-slate-300"></i>':''}
+      <div class="text-xl font-black text-slate-800 leading-none mb-1">#${t['Task ID']}</div>
+      <div class="text-[8px] font-bold text-sky-600 uppercase tracking-wider mb-2 truncate">${t['Project Name']||'-'}</div>
+      <div class="text-[11px] font-semibold text-slate-600 mb-3 line-clamp-2 leading-snug">${t['Nama Task']||t['Task Name']||'-'}</div>
+      <div class="flex gap-1 mb-2 mt-auto">
+        <span class="text-[9px] font-bold px-2 py-0.5 rounded-md border ${c1.c}"><i class="fa-solid ${c1.i||''}"></i> ${t['Status']}</span>
+        <span class="text-[9px] font-bold px-2 py-0.5 rounded-md border ${c2.c||'bg-slate-100'}">${t['Workflow']}</span>
+      </div>
+      <div class="text-[8px] text-slate-400 mt-1 border-t pt-2 flex justify-between items-center">
+        <span>${t['Last Update']?.split(' ')[0]||'-'}</span>
+        <span class="truncate max-w-[80px] font-semibold"><i class="fa-solid fa-user-pen"></i> ${t['Updated By']?.split(' ')[0]||'-'}</span>
+      </div>
+    </div>`;
+  });
+  document.getElementById('taskGrid').innerHTML = h;
+  document.getElementById('pageInfo').innerText = `${STATE.page} / ${Math.ceil(total/STATE.perPage)||1}`;
+  document.getElementById('prevPage').disabled = STATE.page === 1;
+  document.getElementById('nextPage').disabled = STATE.page >= Math.ceil(total/STATE.perPage);
+}
 
-      const modal = document.getElementById("taskModal");
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
-    }
+// ================= MODAL DETAIL & ACTIONS =================
+function bItem(l,v) { return `<div><div class="text-[8px] uppercase font-bold text-slate-400">${l}</div><div class="text-[11px] font-semibold text-slate-700 leading-tight">${v||'-'}</div></div>`; }
+function openDetail(id) {
+  const t = STATE.allTasks.find(x => String(x['Task ID']) === String(id)); if(!t) return;
+  
+  // Update By Info
+  document.getElementById('modalUpdatedBy').innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> Diupdate oleh <b>${t['Updated By']||'Sistem'}</b> pada ${t['Last Update']||'-'}`;
+  
+  document.getElementById('modalTaskId').innerText = '#'+t['Task ID']; document.getElementById('modalProjectName').querySelector('span').innerText = t['Project Name']||'-';
+  const c1 = UI_COLORS[t['Status']]||UI_COLORS['Offline'], c2 = UI_COLORS[t['Workflow']]||UI_COLORS['Waiting Received'];
+  document.getElementById('modalBadges').innerHTML = `<span class="text-[10px] font-bold px-2.5 py-1 rounded-md border ${c1.c}"><i class="fa-solid ${c1.i||''}"></i> ${t['Status']}</span><span class="text-[10px] font-bold px-2.5 py-1 rounded-md border ${c2.c||'bg-slate-100'}">${t['Workflow']}</span>`;
+  document.getElementById('metaGrid').innerHTML = bItem('Task Name',t['Task Name']) + bItem('Alias',t['Nama Task']) + bItem('Goal',t['Task Goal']) + bItem('Type',t['Task Type']) + bItem('Num',t['Num']) + bItem('Pullable',t['Pullable Num']) + bItem('Env',t['Environment Type']) + bItem('Barang',t['List Barang']);
+  
+  let vid = '<div class="text-slate-500 text-xs"><i class="fa-solid fa-video-slash text-2xl mb-1 block"></i>Kosong</div>';
+  if(t['Video URL']) vid = t['Video URL'].includes('youtu') ? `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${t['Video URL'].split('v=')[1]?.split('&')[0]||t['Video URL'].split('youtu.be/')[1]}" allowfullscreen></iframe>` : `<video class="w-full h-full" controls src="${t['Video URL']}"></video>`;
+  document.getElementById('modalVideoThumb').innerHTML = vid;
+  
+  document.getElementById('modalClientNote').innerText = t['Client Note']||'-'; document.getElementById('modalCatatan').innerText = t['Catatan']||'-';
+  const qr = document.getElementById('modalQRImg');
+  if(t['QR Code URL']) { qr.src=t['QR Code URL']; qr.classList.remove('hidden'); document.getElementById('modalQREmpty').classList.add('hidden'); } else { qr.classList.add('hidden'); document.getElementById('modalQREmpty').classList.remove('hidden'); }
 
-    function closeModal() {
-      const modal = document.getElementById("taskModal");
-      const video = document.getElementById("modalVideo");
+  let b = '';
+  if(STATE.role==='leader') b = `<button onclick="updWf('${id}','Sample Video')" class="text-[10px] font-bold text-white bg-sky-500 px-3 py-2 rounded-lg"><i class="fa-solid fa-video"></i> Req Video</button><button onclick="updWf('${id}','Revision')" class="text-[10px] font-bold text-white bg-red-500 px-3 py-2 rounded-lg"><i class="fa-solid fa-rotate-left"></i> Revisi</button>`;
+  else if(STATE.role==='qc') b = `<button onclick="openForm('${id}')" class="text-[10px] font-bold text-white bg-amber-500 px-3 py-2 rounded-lg"><i class="fa-solid fa-pen"></i> Edit</button>`;
+  else if(STATE.role==='approved') b = `<button onclick="openForm('${id}')" class="text-[10px] font-bold text-white bg-amber-500 px-3 py-2 rounded-lg"><i class="fa-solid fa-pen"></i> Edit</button><button onclick="updWf('${id}','Approved')" class="text-[10px] font-bold text-white bg-blue-500 px-3 py-2 rounded-lg">Approve</button><button onclick="updWf('${id}','Ready')" class="text-[10px] font-bold text-white bg-emerald-500 px-3 py-2 rounded-lg">Ready</button>`;
+  document.getElementById('modalActions').innerHTML = b;
+  openModal('detailModal');
+}
 
-      video.pause();
-      video.removeAttribute("src");
-      video.load();
+async function updWf(id, w) {
+  const t = STATE.allTasks.find(x=>String(x['Task ID'])===String(id)); if(!t||!confirm(`Ubah workflow ke ${w}?`)) return;
+  closeModal('detailModal'); showToast('<i class="fa-solid fa-spinner fa-spin"></i>', 'Menyimpan...', 'bg-sky-500');
+  t.Workflow = w; 
+  t['Updated By'] = `${STATE.userName} (${STATE.role.toUpperCase()})`; 
+  t['Last Update'] = getWaktu();
+  try { await fetch(STATE.apiUrl, {method:'POST', body:JSON.stringify({action:'update',task:t})}); showToast('<i class="fa-solid fa-check"></i>', 'Update sukses', 'bg-emerald-600'); loadData(); }
+  catch(e) { localStorage.setItem('localT', JSON.stringify(STATE.allTasks)); applyFilter(); }
+}
 
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
-    }
+function openAddModal() { openForm(null); }
+function openForm(id) {
+  const t = id ? STATE.allTasks.find(x=>String(x['Task ID'])===String(id)) : null;
+  document.getElementById('editModalTitle').innerHTML = t ? '<i class="fa-solid fa-pen"></i> Edit Task' : '<i class="fa-solid fa-plus"></i> Buat Task';
+  document.getElementById('editTaskId').value = id||''; document.getElementById('form_taskId').value = id||''; document.getElementById('form_taskId').disabled = !!id;
+  const k = ['project','taskName','desc','goal','initStatus','genDir','type','num','label','pull','env','status','wf','video','qr','barang','catatan','clientNote'];
+  const dk = ['Project Name','Task Name','Description','Task Goal','Initialize Status','Generalization Direction','Task Type','Num','Label','Pullable Num','Environment Type','Status','Workflow','Video URL','QR Code URL','List Barang','Catatan','Client Note'];
+  k.forEach((idK,i) => { document.getElementById('form_'+idK).value = t ? (t[dk[i]]||'') : ''; });
+  if(!t) { document.getElementById('form_status').value = 'Offline'; document.getElementById('form_wf').value = 'Waiting Received'; document.getElementById('form_project').value = STATE.project||''; }
+  
+  const cn = document.getElementById('form_clientNote'), lk = document.getElementById('form_lockInfo');
+  if(STATE.role === 'approved') { cn.readOnly = false; cn.classList.remove('bg-slate-100'); lk.innerHTML = '<i class="fa-solid fa-pen"></i> Bisa diisi'; } else { cn.readOnly = true; cn.classList.add('bg-slate-100'); lk.innerHTML = '<i class="fa-solid fa-lock"></i> Only Approver'; }
+  
+  if(id) closeModal('detailModal'); openModal('editModal');
+}
+async function saveTask() {
+  const oldId = document.getElementById('editTaskId').value, nId = document.getElementById('form_taskId').value.trim(); if(!nId) return alert('Task ID wajib!');
+  const d = {'Task ID':nId, 'Project Name':v('project'), 'Task Name':v('taskName'), 'Description':v('desc'), 'Task Goal':v('goal'), 'Initialize Status':v('initStatus'), 'Generalization Direction':v('genDir'), 'Task Type':v('type'), 'Num':v('num'), 'Label':v('label'), 'Pullable Num':v('pull'), 'Environment Type':v('env'), 'Status':v('status'), 'Workflow':v('wf'), 'Video URL':v('video'), 'QR Code URL':v('qr'), 'List Barang':v('barang'), 'Catatan':v('catatan'), 'Client Note':v('clientNote')};
+  
+  // SIMPAN NAMA PENGUPDATE
+  d['Updated By'] = `${STATE.userName} (${STATE.role.toUpperCase()})`;
+  d['Last Update'] = getWaktu();
 
-    function getStatus(task) {
-      const status = String(task.dashboard_status || "").trim();
+  closeModal('editModal'); showToast('<i class="fa-solid fa-spinner fa-spin"></i>', 'Menyimpan...', 'bg-sky-500');
+  try { await fetch(STATE.apiUrl, {method:'POST', body:JSON.stringify({action:oldId?'update':'create', task:d})}); showToast('<i class="fa-solid fa-check"></i>', 'Tersimpan!', 'bg-emerald-600'); loadData(); }
+  catch(e) { if(!oldId) STATE.allTasks.unshift(d); else { const i=STATE.allTasks.findIndex(x=>String(x['Task ID'])===String(oldId)); if(i>-1) STATE.allTasks[i]=d; } localStorage.setItem('localT', JSON.stringify(STATE.allTasks)); applyFilter(); }
+}
 
-      if (status) return status;
-
-      const pullable = Number(task.pullable_num || 0);
-      if (pullable > 0) return "Online";
-
-      return "Offline";
-    }
-
-    function getStatusClass(status) {
-      if (status === "Online") {
-        return "inline-flex px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700";
-      }
-
-      if (status === "Offline") {
-        return "inline-flex px-3 py-1 rounded-full text-sm font-medium bg-slate-100 text-slate-600";
-      }
-
-      return "inline-flex px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-700";
-    }
-
-    function cleanVideoUrl(url) {
-      if (!url) return "";
-      return String(url)
-        .trim()
-        .replaceAll("&amp;", "&");
-    }
-
-    function escapeHtml(text) {
-      return String(text)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    loadTasks();
-
-    // Auto refresh setiap 60 detik
-    setInterval(loadTasks, 60000);
-  </script>
-
+// Utils
+function v(id){ return document.getElementById('form_'+id).value.trim(); }
+function getWaktu() { const d=new Date(); return `${d.getDate()}/${d.getMonth()+1} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+let _t; function showToast(i,m,c) { const e=document.getElementById('toast'), tc=document.getElementById('toastContent'); tc.className=`flex items-center gap-2 text-white text-[10px] font-bold px-3 py-2 rounded-lg shadow-xl ${c}`; document.getElementById('toastIcon').innerHTML=i; document.getElementById('toastMsg').innerText=m; e.classList.remove('hidden'); clearTimeout(_t); _t=setTimeout(()=>e.classList.add('hidden'),3000); }
+function openQRFullscreen() { const q = document.getElementById('modalQRImg'); if(!q.classList.contains('hidden')) { q.requestFullscreen?q.requestFullscreen():q.webkitRequestFullscreen?q.webkitRequestFullscreen():null; } }
+</script>
 </body>
 </html>
